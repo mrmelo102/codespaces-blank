@@ -32,104 +32,7 @@
   <main class="flex-grow p-4 md:p-6 space-y-6">
     <div class="max-w-6xl mx-auto space-y-6">
 
-      <!-- CARTÃO 1: CONTROLE GERENCIAL & RELATÓRIO DE ATENDIMENTOS -->
-      <div class="bg-white p-6 md:p-7 rounded-2xl shadow-sm border border-slate-200/80 space-y-6">
-        
-        <!-- Cabeçalho + Filtro de Data + Botão Baixar Relatório -->
-        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
-          <div>
-            <div class="flex flex-wrap items-center gap-2.5">
-              <h1 class="text-xl font-extrabold text-slate-900 tracking-tight">Controle Gerencial & Relatório</h1>
-              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-semibold">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                Sincronizado com Consultórios
-              </span>
-            </div>
-            <p class="text-xs text-slate-500 mt-0.5">Acompanhamento de fluxo, horários de entrada/atendimento e tempo de espera</p>
-          </div>
-
-          <!-- Controles à direita: Seletor de Mês + Botão Baixar Relatório -->
-          <div class="flex flex-wrap items-center gap-2.5">
-            <input type="month" id="filtroMes" class="px-3 py-2 border border-slate-300 rounded-xl text-sm font-medium text-slate-700 bg-white outline-none focus:ring-2 focus:ring-[#1EB5A6]">
-
-            <button type="button" id="btnBaixarRelatorio" class="px-4 py-2 bg-[#0B2C4D] hover:bg-[#13406d] text-white text-sm font-semibold rounded-xl shadow-sm transition flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-              </svg>
-              <span>Baixar Relatório</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- 4 Cartões de KPI (incluindo Tempo Médio de Espera) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          <div class="p-4 rounded-xl bg-slate-50/80 border border-slate-200/90">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">Total de Atendimentos</span>
-            <p id="kpiTotal" class="text-3xl font-extrabold text-slate-900 mt-1">0</p>
-            <span id="kpiFinalizadosLegenda" class="text-xs text-slate-500 mt-1 block">0 consultas finalizadas</span>
-          </div>
-
-          <div class="p-4 rounded-xl bg-blue-50/50 border border-blue-200/80">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-blue-600 block">Atendimentos Convênio</span>
-            <p id="kpiConvenio" class="text-3xl font-extrabold text-blue-700 mt-1">0</p>
-            <span id="kpiConvenioPct" class="text-xs font-medium text-blue-600 mt-1 block">0% do volume total</span>
-          </div>
-
-          <div class="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200/80">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-600 block">Atendimentos Particular</span>
-            <p id="kpiParticular" class="text-3xl font-extrabold text-emerald-700 mt-1">0</p>
-            <span id="kpiParticularPct" class="text-xs font-medium text-emerald-600 mt-1 block">0% do volume total</span>
-          </div>
-
-          <div class="p-4 rounded-xl bg-amber-50/60 border border-amber-200/90">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 block">Tempo Médio de Espera</span>
-            <p id="kpiTempoMedio" class="text-3xl font-extrabold text-amber-800 mt-1">--</p>
-            <span class="text-xs text-amber-700/80 mt-1 block">Recepção até consultório</span>
-          </div>
-
-        </div>
-
-        <!-- Barra de Distribuição Convênio vs. Particular -->
-        <div class="p-4 rounded-xl bg-slate-50/50 border border-slate-200/90 space-y-2">
-          <div class="flex justify-between items-center text-xs">
-            <span class="font-bold text-slate-800">Distribuição Convênio vs. Particular</span>
-            <span id="textoDistribuicao" class="font-bold text-slate-800">0 Convênios / 0 Particulares</span>
-          </div>
-          <div class="w-full h-2.5 bg-slate-200/70 rounded-full overflow-hidden flex">
-            <div id="barraConvenio" style="width: 50%" class="bg-blue-600 h-full transition-all duration-500"></div>
-            <div id="barraParticular" style="width: 50%" class="bg-emerald-500 h-full transition-all duration-500"></div>
-          </div>
-        </div>
-
-        <!-- Tabela Detalhada com Entrada, Atendimento Médico e Tempo de Espera -->
-        <div class="border border-slate-200 rounded-xl overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-              <thead>
-                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  <th class="py-3 px-4">Data</th>
-                  <th class="py-3 px-4">Paciente</th>
-                  <th class="py-3 px-4">Profissional</th>
-                  <th class="py-3 px-4">Modalidade</th>
-                  <th class="py-3 px-4">Entrada (Recepção)</th>
-                  <th class="py-3 px-4">Atend. Médico</th>
-                  <th class="py-3 px-4">Tempo de Espera</th>
-                  <th class="py-3 px-4">Status</th>
-                </tr>
-              </thead>
-              <tbody id="tabelaRelatorio" class="divide-y divide-slate-100 text-sm bg-white">
-                <tr>
-                  <td colspan="8" class="py-8 text-center text-xs text-slate-400">Carregando atendimentos...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- CARTÃO 2: DADOS DA CLÍNICA, LOGO & CÓDIGO PARA A EQUIPE -->
+      <!-- CARTÃO 1 (TOPO): DADOS DA CLÍNICA, LOGO & CÓDIGO PARA A EQUIPE -->
       <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
         <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 border-b border-slate-100 pb-4 mb-5">
           <div>
@@ -198,6 +101,103 @@
         </form>
       </div>
 
+      <!-- CARTÃO 2: CONTROLE GERENCIAL & RELATÓRIO DE ATENDIMENTOS -->
+      <div class="bg-white p-6 md:p-7 rounded-2xl shadow-sm border border-slate-200/80 space-y-6">
+        
+        <!-- Cabeçalho + Filtro de Data + Botão Baixar Relatório -->
+        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+          <div>
+            <div class="flex flex-wrap items-center gap-2.5">
+              <h1 class="text-xl font-extrabold text-slate-900 tracking-tight">Controle Gerencial & Relatório</h1>
+              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-semibold">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                Sincronizado com Consultórios
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 mt-0.5">Acompanhamento de fluxo, horários de entrada/atendimento e tempo de espera</p>
+          </div>
+
+          <!-- Controles à direita: Seletor de Mês + Botão Baixar Relatório -->
+          <div class="flex flex-wrap items-center gap-2.5">
+            <input type="month" id="filtroMes" class="px-3 py-2 border border-slate-300 rounded-xl text-sm font-medium text-slate-700 bg-white outline-none focus:ring-2 focus:ring-[#1EB5A6]">
+
+            <button type="button" id="btnBaixarRelatorio" class="px-4 py-2 bg-[#0B2C4D] hover:bg-[#13406d] text-white text-sm font-semibold rounded-xl shadow-sm transition flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              <span>Baixar Relatório</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 Cartões de KPI -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <div class="p-4 rounded-xl bg-slate-50/80 border border-slate-200/90">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">Total de Atendimentos</span>
+            <p id="kpiTotal" class="text-3xl font-extrabold text-slate-900 mt-1">0</p>
+            <span id="kpiFinalizadosLegenda" class="text-xs text-slate-500 mt-1 block">0 consultas finalizadas</span>
+          </div>
+
+          <div class="p-4 rounded-xl bg-blue-50/50 border border-blue-200/80">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-blue-600 block">Atendimentos Convênio</span>
+            <p id="kpiConvenio" class="text-3xl font-extrabold text-blue-700 mt-1">0</p>
+            <span id="kpiConvenioPct" class="text-xs font-medium text-blue-600 mt-1 block">0% do volume total</span>
+          </div>
+
+          <div class="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200/80">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-600 block">Atendimentos Particular</span>
+            <p id="kpiParticular" class="text-3xl font-extrabold text-emerald-700 mt-1">0</p>
+            <span id="kpiParticularPct" class="text-xs font-medium text-emerald-600 mt-1 block">0% do volume total</span>
+          </div>
+
+          <div class="p-4 rounded-xl bg-amber-50/60 border border-amber-200/90">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 block">Tempo Médio de Espera</span>
+            <p id="kpiTempoMedio" class="text-3xl font-extrabold text-amber-800 mt-1">--</p>
+            <span class="text-xs text-amber-700/80 mt-1 block">Recepção até consultório</span>
+          </div>
+
+        </div>
+
+        <!-- Barra de Distribuição Convênio vs. Particular -->
+        <div class="p-4 rounded-xl bg-slate-50/50 border border-slate-200/90 space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-bold text-slate-800">Distribuição Convênio vs. Particular</span>
+            <span id="textoDistribuicao" class="font-bold text-slate-800">0 Convênios / 0 Particulares</span>
+          </div>
+          <div class="w-full h-2.5 bg-slate-200/70 rounded-full overflow-hidden flex">
+            <div id="barraConvenio" style="width: 50%" class="bg-blue-600 h-full transition-all duration-500"></div>
+            <div id="barraParticular" style="width: 50%" class="bg-emerald-500 h-full transition-all duration-500"></div>
+          </div>
+        </div>
+
+        <!-- Tabela Detalhada com Entrada, Atendimento Médico e Tempo de Espera -->
+        <div class="border border-slate-200 rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  <th class="py-3 px-4">Data</th>
+                  <th class="py-3 px-4">Paciente</th>
+                  <th class="py-3 px-4">Profissional</th>
+                  <th class="py-3 px-4">Modalidade</th>
+                  <th class="py-3 px-4">Entrada (Recepção)</th>
+                  <th class="py-3 px-4">Atend. Médico</th>
+                  <th class="py-3 px-4">Tempo de Espera</th>
+                  <th class="py-3 px-4">Status</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaRelatorio" class="divide-y divide-slate-100 text-sm bg-white">
+                <tr>
+                  <td colspan="8" class="py-8 text-center text-xs text-slate-400">Carregando atendimentos...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
     </div>
   </main>
 
@@ -219,7 +219,6 @@
     const mesAtualStr = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}`;
     document.getElementById('filtroMes').value = mesAtualStr;
 
-    // Formata Timestamp do Firestore ou string HH:MM para "HH:MM"
     function extrairHoraFormatada(item, campoHoraStr, campoTimestamp) {
       if (item[campoHoraStr]) return item[campoHoraStr];
       if (item[campoTimestamp] && typeof item[campoTimestamp].toDate === 'function') {
@@ -229,7 +228,6 @@
       return null;
     }
 
-    // Calcula diferença em minutos entre "HH:MM" de entrada e "HH:MM" do médico
     function calcularEspera(horaEntradaStr, horaMedicoStr) {
       if (!horaEntradaStr || !horaMedicoStr) return { minutos: null, texto: "Aguardando" };
 
@@ -331,7 +329,6 @@
         return mesItem === mesSelecionado;
       });
 
-      // Ordena do mais recente para o mais antigo
       filtrados.sort((a, b) => {
         const dtA = `${a.dataAtendimento || ''} ${a.horaAtendimento || ''}`;
         const dtB = `${b.dataAtendimento || ''} ${b.horaAtendimento || ''}`;
@@ -357,7 +354,6 @@
         const dataFmt = item.dataAtendimento ? item.dataAtendimento.split('-').reverse().join('/') : '--/--/----';
         const horaEntrada = extrairHoraFormatada(item, 'horaAtendimento', 'dataEntrada') || '--:--';
         
-        // Busca horário em que o médico atendeu/finalizou
         let horaMedico = extrairHoraFormatada(item, 'horaAtendimentoMedico', 'finalizadoEm');
         if (!horaMedico && isFinalizado) {
           horaMedico = extrairHoraFormatada(item, 'horaFinalizacao', 'atualizadoEm') || horaEntrada;
@@ -413,7 +409,6 @@
         `;
       });
 
-      // Atualiza KPIs
       const baseVol = (qtdConv + qtdPart) > 0 ? (qtdConv + qtdPart) : total;
       const pctConv = baseVol > 0 ? Math.round((qtdConv / baseVol) * 100) : 0;
       const pctPart = baseVol > 0 ? (qtdConv + qtdPart > 0 ? 100 - pctConv : 0) : 0;
@@ -446,7 +441,6 @@
         : '<tr><td colspan="8" class="text-center py-8 text-xs text-slate-400">Nenhum atendimento registrado neste mês.</td></tr>';
     }
 
-    // Gerar e Baixar Relatório Gerencial em PDF
     document.getElementById('btnBaixarRelatorio').addEventListener('click', () => {
       if (registrosFiltradosAtual.length === 0) {
         alert("Não há atendimentos registrados no mês selecionado para gerar o relatório.");
@@ -456,7 +450,6 @@
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({ orientation: 'landscape' });
 
-      // Cabeçalho com identidade da clínica
       pdf.setFillColor(11, 44, 77);
       pdf.rect(0, 0, 297, 30, 'F');
 
