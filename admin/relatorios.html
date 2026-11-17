@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Administração - VitaeSys | Gestão da Clínica</title>
+  <title>Administração - VitaeSys | Controle Gerencial</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body class="bg-slate-100 min-h-screen flex flex-col justify-between">
 
@@ -30,15 +32,111 @@
   <main class="flex-grow p-4 md:p-6 space-y-6">
     <div class="max-w-6xl mx-auto space-y-6">
 
-      <!-- CARTÃO 1: DADOS DA CLÍNICA, LOGO & CÓDIGO PARA A EQUIPE -->
-      <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-100">
-        <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 border-b border-slate-100 pb-4 mb-5">
+      <!-- CARTÃO 1: CONTROLE GERENCIAL & RELATÓRIO DE ATENDIMENTOS -->
+      <div class="bg-white p-6 md:p-7 rounded-2xl shadow-sm border border-slate-200/80 space-y-6">
+        
+        <!-- Cabeçalho + Filtro de Data + Botão Baixar Relatório -->
+        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
           <div>
-            <h2 class="text-base font-bold text-[#0B2C4D]">Dados Institucionais & Impressão</h2>
-            <p class="text-xs text-slate-500">A logo e os dados abaixo aparecem automaticamente no cabeçalho das fichas e PDFs da sua clínica</p>
+            <div class="flex flex-wrap items-center gap-2.5">
+              <h1 class="text-xl font-extrabold text-slate-900 tracking-tight">Controle Gerencial & Relatório</h1>
+              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-semibold">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                Sincronizado com Consultórios
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 mt-0.5">Acompanhamento de fluxo, horários de entrada/atendimento e tempo de espera</p>
           </div>
 
-          <!-- Código de Convite da Equipe -->
+          <!-- Controles à direita: Seletor de Mês + Botão Baixar Relatório -->
+          <div class="flex flex-wrap items-center gap-2.5">
+            <input type="month" id="filtroMes" class="px-3 py-2 border border-slate-300 rounded-xl text-sm font-medium text-slate-700 bg-white outline-none focus:ring-2 focus:ring-[#1EB5A6]">
+
+            <button type="button" id="btnBaixarRelatorio" class="px-4 py-2 bg-[#0B2C4D] hover:bg-[#13406d] text-white text-sm font-semibold rounded-xl shadow-sm transition flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              <span>Baixar Relatório</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 Cartões de KPI (incluindo Tempo Médio de Espera) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <div class="p-4 rounded-xl bg-slate-50/80 border border-slate-200/90">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">Total de Atendimentos</span>
+            <p id="kpiTotal" class="text-3xl font-extrabold text-slate-900 mt-1">0</p>
+            <span id="kpiFinalizadosLegenda" class="text-xs text-slate-500 mt-1 block">0 consultas finalizadas</span>
+          </div>
+
+          <div class="p-4 rounded-xl bg-blue-50/50 border border-blue-200/80">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-blue-600 block">Atendimentos Convênio</span>
+            <p id="kpiConvenio" class="text-3xl font-extrabold text-blue-700 mt-1">0</p>
+            <span id="kpiConvenioPct" class="text-xs font-medium text-blue-600 mt-1 block">0% do volume total</span>
+          </div>
+
+          <div class="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200/80">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-600 block">Atendimentos Particular</span>
+            <p id="kpiParticular" class="text-3xl font-extrabold text-emerald-700 mt-1">0</p>
+            <span id="kpiParticularPct" class="text-xs font-medium text-emerald-600 mt-1 block">0% do volume total</span>
+          </div>
+
+          <div class="p-4 rounded-xl bg-amber-50/60 border border-amber-200/90">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 block">Tempo Médio de Espera</span>
+            <p id="kpiTempoMedio" class="text-3xl font-extrabold text-amber-800 mt-1">--</p>
+            <span class="text-xs text-amber-700/80 mt-1 block">Recepção até consultório</span>
+          </div>
+
+        </div>
+
+        <!-- Barra de Distribuição Convênio vs. Particular -->
+        <div class="p-4 rounded-xl bg-slate-50/50 border border-slate-200/90 space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-bold text-slate-800">Distribuição Convênio vs. Particular</span>
+            <span id="textoDistribuicao" class="font-bold text-slate-800">0 Convênios / 0 Particulares</span>
+          </div>
+          <div class="w-full h-2.5 bg-slate-200/70 rounded-full overflow-hidden flex">
+            <div id="barraConvenio" style="width: 50%" class="bg-blue-600 h-full transition-all duration-500"></div>
+            <div id="barraParticular" style="width: 50%" class="bg-emerald-500 h-full transition-all duration-500"></div>
+          </div>
+        </div>
+
+        <!-- Tabela Detalhada com Entrada, Atendimento Médico e Tempo de Espera -->
+        <div class="border border-slate-200 rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  <th class="py-3 px-4">Data</th>
+                  <th class="py-3 px-4">Paciente</th>
+                  <th class="py-3 px-4">Profissional</th>
+                  <th class="py-3 px-4">Modalidade</th>
+                  <th class="py-3 px-4">Entrada (Recepção)</th>
+                  <th class="py-3 px-4">Atend. Médico</th>
+                  <th class="py-3 px-4">Tempo de Espera</th>
+                  <th class="py-3 px-4">Status</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaRelatorio" class="divide-y divide-slate-100 text-sm bg-white">
+                <tr>
+                  <td colspan="8" class="py-8 text-center text-xs text-slate-400">Carregando atendimentos...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- CARTÃO 2: DADOS DA CLÍNICA, LOGO & CÓDIGO PARA A EQUIPE -->
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+        <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 border-b border-slate-100 pb-4 mb-5">
+          <div>
+            <h2 class="text-base font-bold text-[#0B2C4D]">Dados Institucionais, Logotipo & Acesso da Equipe</h2>
+            <p class="text-xs text-slate-500">A logo e os dados abaixo aparecem no cabeçalho das fichas e relatórios PDF da sua clínica</p>
+          </div>
+
           <div class="bg-teal-50 border border-teal-200 px-4 py-2.5 rounded-xl flex items-center gap-3">
             <div>
               <span class="text-[10px] font-bold uppercase text-slate-500 block">Código para Equipe (Recepção / Médicos)</span>
@@ -51,19 +149,17 @@
         </div>
 
         <form id="formDadosClinica" class="space-y-5">
-          
-          <!-- BLOCO DE UPLOAD DA LOGO DA CLÍNICA -->
           <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4">
-            <div class="w-20 h-20 rounded-xl border-2 border-dashed border-slate-300 bg-white flex items-center justify-center overflow-hidden shrink-0">
+            <div class="w-16 h-16 rounded-xl border-2 border-dashed border-slate-300 bg-white flex items-center justify-center overflow-hidden shrink-0">
               <img id="previewLogoClinica" src="" alt="Logo da Clínica" class="hidden w-full h-full object-contain p-1">
-              <span id="placeholderLogo" class="text-[11px] text-slate-400 text-center px-1 leading-tight">Sem Logo</span>
+              <span id="placeholderLogo" class="text-[10px] text-slate-400 text-center px-1 leading-tight">Sem Logo</span>
             </div>
 
             <div class="flex-grow text-center sm:text-left">
               <label class="block text-sm font-bold text-[#0B2C4D]">Logotipo da Clínica (Opcional)</label>
-              <p class="text-xs text-slate-500 mt-0.5">Envie uma imagem PNG ou JPG. Ela será ajustada automaticamente para sair nítida no cabeçalho das fichas.</p>
+              <p class="text-xs text-slate-500 mt-0.5">Envie uma imagem PNG ou JPG para estampar nas fichas e relatórios impressos.</p>
               
-              <div class="mt-2.5 flex flex-wrap justify-center sm:justify-start items-center gap-2">
+              <div class="mt-2 flex flex-wrap justify-center sm:justify-start items-center gap-2">
                 <label for="inputLogoClinica" class="cursor-pointer px-3.5 py-1.5 bg-[#0B2C4D] hover:bg-[#13406d] text-white text-xs font-semibold rounded-lg transition">
                   Escolher Imagem
                 </label>
@@ -76,7 +172,6 @@
             </div>
           </div>
 
-          <!-- CAMPOS DE TEXTO INSTITUCIONAIS -->
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="md:col-span-2">
               <label class="block text-xs font-semibold text-[#0B2C4D]">Nome Fantasia</label>
@@ -100,53 +195,7 @@
               </button>
             </div>
           </div>
-
         </form>
-      </div>
-
-      <!-- CARTÃO 2: INDICADORES MENSAIS DA CLÍNICA -->
-      <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-100">
-        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border-b border-slate-100 pb-4 mb-5">
-          <div>
-            <h2 class="text-base font-bold text-[#0B2C4D]">Relatório de Atendimentos</h2>
-            <p class="text-xs text-slate-500">Resumo mensal exclusivo da sua unidade</p>
-          </div>
-          <div>
-            <input type="month" id="filtroMes" class="p-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#1EB5A6]">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
-            <span class="text-xs font-semibold text-slate-500">Total de Atendimentos</span>
-            <p id="kpiTotal" class="text-2xl font-extrabold text-[#0B2C4D] mt-1">0</p>
-          </div>
-          <div class="p-4 rounded-xl bg-teal-50/60 border border-teal-200">
-            <span class="text-xs font-semibold text-slate-500">Consultas Finalizadas</span>
-            <p id="kpiFinalizados" class="text-2xl font-extrabold text-[#1EB5A6] mt-1">0</p>
-          </div>
-          <div class="p-4 rounded-xl bg-sky-50/60 border border-sky-200">
-            <span class="text-xs font-semibold text-slate-500">Particular vs Convênio</span>
-            <p id="kpiModalidades" class="text-sm font-bold text-[#0B2C4D] mt-2">0 Part. / 0 Conv.</p>
-          </div>
-        </div>
-
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse text-sm">
-            <thead>
-              <tr class="border-b border-slate-200 text-xs uppercase text-slate-400">
-                <th class="py-2.5 px-3">Data / Hora</th>
-                <th class="py-2.5 px-3">Paciente</th>
-                <th class="py-2.5 px-3">Profissional</th>
-                <th class="py-2.5 px-3">Modalidade</th>
-                <th class="py-2.5 px-3">Status</th>
-              </tr>
-            </thead>
-            <tbody id="tabelaRelatorio" class="divide-y divide-slate-100">
-              <tr><td colspan="5" class="text-center py-6 text-slate-400">Carregando dados...</td></tr>
-            </tbody>
-          </table>
-        </div>
       </div>
 
     </div>
@@ -159,14 +208,51 @@
   <script type="module">
     import { auth, db } from '../js/firebase-config.js';
     import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { collection, doc, getDoc, updateDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { collection, doc, getDoc, updateDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     let clinicaAtual = null;
     let logoBase64Atual = "";
+    let todosAtendimentosClinica = [];
+    let registrosFiltradosAtual = [];
 
     const agora = new Date();
     const mesAtualStr = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}`;
     document.getElementById('filtroMes').value = mesAtualStr;
+
+    // Formata Timestamp do Firestore ou string HH:MM para "HH:MM"
+    function extrairHoraFormatada(item, campoHoraStr, campoTimestamp) {
+      if (item[campoHoraStr]) return item[campoHoraStr];
+      if (item[campoTimestamp] && typeof item[campoTimestamp].toDate === 'function') {
+        const dt = item[campoTimestamp].toDate();
+        return `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
+      }
+      return null;
+    }
+
+    // Calcula diferença em minutos entre "HH:MM" de entrada e "HH:MM" do médico
+    function calcularEspera(horaEntradaStr, horaMedicoStr) {
+      if (!horaEntradaStr || !horaMedicoStr) return { minutos: null, texto: "Aguardando" };
+
+      const [h1, m1] = horaEntradaStr.split(':').map(Number);
+      const [h2, m2] = horaMedicoStr.split(':').map(Number);
+
+      if (isNaN(h1) || isNaN(m1) || isNaN(h2) || isNaN(m2)) {
+        return { minutos: null, texto: "--" };
+      }
+
+      let diffMin = (h2 * 60 + m2) - (h1 * 60 + m1);
+      if (diffMin < 0) diffMin = 0;
+
+      if (diffMin === 0) return { minutos: 0, texto: "Imediato (0 min)" };
+      if (diffMin < 60) return { minutos: diffMin, texto: `${diffMin} min` };
+
+      const horas = Math.floor(diffMin / 60);
+      const mins = diffMin % 60;
+      return {
+        minutos: diffMin,
+        texto: mins > 0 ? `${horas}h ${mins}min` : `${horas}h`
+      };
+    }
 
     function atualizarPreviewLogo(base64) {
       const preview = document.getElementById('previewLogoClinica');
@@ -193,7 +279,6 @@
       }
     }
 
-    // Otimiza e converte a imagem escolhida para PNG Base64 leve (máx 240px)
     document.getElementById('inputLogoClinica').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -238,6 +323,199 @@
       atualizarPreviewLogo("");
     });
 
+    function renderizarRelatorioMensal() {
+      const mesSelecionado = document.getElementById('filtroMes').value;
+
+      const filtrados = todosAtendimentosClinica.filter(item => {
+        const mesItem = item.mesAno || (item.dataAtendimento || '').substring(0, 7);
+        return mesItem === mesSelecionado;
+      });
+
+      // Ordena do mais recente para o mais antigo
+      filtrados.sort((a, b) => {
+        const dtA = `${a.dataAtendimento || ''} ${a.horaAtendimento || ''}`;
+        const dtB = `${b.dataAtendimento || ''} ${b.horaAtendimento || ''}`;
+        return dtB.localeCompare(dtA);
+      });
+
+      registrosFiltradosAtual = [];
+
+      let total = 0;
+      let finalizados = 0;
+      let qtdConv = 0;
+      let qtdPart = 0;
+      let somaMinutosEspera = 0;
+      let contEsperaCalculada = 0;
+
+      const linhasHtml = filtrados.map(item => {
+        total++;
+        const isFinalizado = item.status === 'finalizado' || item.status === 'concluido';
+        if (isFinalizado) finalizados++;
+        if (item.tipo === 'Convênio') qtdConv++;
+        if (item.tipo === 'Particular') qtdPart++;
+
+        const dataFmt = item.dataAtendimento ? item.dataAtendimento.split('-').reverse().join('/') : '--/--/----';
+        const horaEntrada = extrairHoraFormatada(item, 'horaAtendimento', 'dataEntrada') || '--:--';
+        
+        // Busca horário em que o médico atendeu/finalizou
+        let horaMedico = extrairHoraFormatada(item, 'horaAtendimentoMedico', 'finalizadoEm');
+        if (!horaMedico && isFinalizado) {
+          horaMedico = extrairHoraFormatada(item, 'horaFinalizacao', 'atualizadoEm') || horaEntrada;
+        }
+
+        const espera = calcularEspera(horaEntrada !== '--:--' ? horaEntrada : null, horaMedico);
+        if (espera.minutos !== null) {
+          somaMinutosEspera += espera.minutos;
+          contEsperaCalculada++;
+        }
+
+        registrosFiltradosAtual.push({
+          data: dataFmt,
+          paciente: item.pacienteNome || 'Paciente',
+          profissional: item.medicoNome || '-',
+          modalidade: item.tipo || '-',
+          horaEntrada: horaEntrada,
+          horaMedico: horaMedico || 'Aguardando',
+          tempoEspera: espera.texto,
+          status: isFinalizado ? 'Finalizado' : (item.status || 'Aguardando')
+        });
+
+        let badgeTipo = `<span class="inline-block px-2.5 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-700">${item.tipo || '-'}</span>`;
+        if (item.tipo === 'Convênio') {
+          badgeTipo = `<span class="inline-block px-2.5 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-600">Convênio</span>`;
+        } else if (item.tipo === 'Particular') {
+          badgeTipo = `<span class="inline-block px-2.5 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-600">Particular</span>`;
+        }
+
+        let badgeEspera = `<span class="text-xs text-slate-400 font-medium">${espera.texto}</span>`;
+        if (espera.minutos !== null) {
+          const corEspera = espera.minutos > 30
+            ? 'bg-amber-100 text-amber-800 border-amber-200'
+            : 'bg-teal-50 text-[#0B2C4D] border-teal-200';
+          badgeEspera = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold border ${corEspera}">⏱ ${espera.texto}</span>`;
+        }
+
+        const badgeStatus = isFinalizado
+          ? `<span class="inline-block px-2.5 py-0.5 text-xs font-bold rounded-full bg-teal-100 text-[#0B2C4D]">Finalizado</span>`
+          : `<span class="inline-block px-2.5 py-0.5 text-xs font-bold rounded-full bg-amber-100 text-amber-800">${item.status || 'Aguardando'}</span>`;
+
+        return `
+          <tr class="hover:bg-slate-50/80 transition">
+            <td class="py-3 px-4 text-slate-600 whitespace-nowrap">${dataFmt}</td>
+            <td class="py-3 px-4 font-bold text-slate-900">${item.pacienteNome || 'Paciente'}</td>
+            <td class="py-3 px-4 text-slate-600">${item.medicoNome || '-'}</td>
+            <td class="py-3 px-4">${badgeTipo}</td>
+            <td class="py-3 px-4 font-semibold text-slate-700">${horaEntrada}</td>
+            <td class="py-3 px-4 font-semibold text-[#0B2C4D]">${horaMedico || '<span class="text-xs text-slate-400 font-normal">Aguardando</span>'}</td>
+            <td class="py-3 px-4 whitespace-nowrap">${badgeEspera}</td>
+            <td class="py-3 px-4">${badgeStatus}</td>
+          </tr>
+        `;
+      });
+
+      // Atualiza KPIs
+      const baseVol = (qtdConv + qtdPart) > 0 ? (qtdConv + qtdPart) : total;
+      const pctConv = baseVol > 0 ? Math.round((qtdConv / baseVol) * 100) : 0;
+      const pctPart = baseVol > 0 ? (qtdConv + qtdPart > 0 ? 100 - pctConv : 0) : 0;
+
+      document.getElementById('kpiTotal').textContent = total;
+      document.getElementById('kpiFinalizadosLegenda').textContent = `${finalizados} consultas finalizadas`;
+      document.getElementById('kpiConvenio').textContent = qtdConv;
+      document.getElementById('kpiConvenioPct').textContent = `${pctConv}% do volume total`;
+      document.getElementById('kpiParticular').textContent = qtdPart;
+      document.getElementById('kpiParticularPct').textContent = `${pctPart}% do volume total`;
+
+      if (contEsperaCalculada > 0) {
+        const mediaMin = Math.round(somaMinutosEspera / contEsperaCalculada);
+        document.getElementById('kpiTempoMedio').textContent = `${mediaMin} min`;
+      } else {
+        document.getElementById('kpiTempoMedio').textContent = "--";
+      }
+
+      document.getElementById('textoDistribuicao').textContent = `${qtdConv} Convênios / ${qtdPart} Particulares`;
+      if (qtdConv === 0 && qtdPart === 0) {
+        document.getElementById('barraConvenio').style.width = '50%';
+        document.getElementById('barraParticular').style.width = '50%';
+      } else {
+        document.getElementById('barraConvenio').style.width = `${pctConv}%`;
+        document.getElementById('barraParticular').style.width = `${pctPart}%`;
+      }
+
+      document.getElementById('tabelaRelatorio').innerHTML = linhasHtml.length > 0
+        ? linhasHtml.join('')
+        : '<tr><td colspan="8" class="text-center py-8 text-xs text-slate-400">Nenhum atendimento registrado neste mês.</td></tr>';
+    }
+
+    // Gerar e Baixar Relatório Gerencial em PDF
+    document.getElementById('btnBaixarRelatorio').addEventListener('click', () => {
+      if (registrosFiltradosAtual.length === 0) {
+        alert("Não há atendimentos registrados no mês selecionado para gerar o relatório.");
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: 'landscape' });
+
+      // Cabeçalho com identidade da clínica
+      pdf.setFillColor(11, 44, 77);
+      pdf.rect(0, 0, 297, 30, 'F');
+
+      let xTexto = 14;
+      if (clinicaAtual?.logoBase64) {
+        try {
+          pdf.setFillColor(255, 255, 255);
+          pdf.roundedRect(14, 4, 22, 22, 2, 2, 'F');
+          pdf.addImage(clinicaAtual.logoBase64, 'PNG', 15, 5, 20, 20);
+          xTexto = 41;
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      const mesRef = document.getElementById('filtroMes').value.split('-').reverse().join('/');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(14);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(`Relatório de Atendimentos & Tempo de Espera — ${clinicaAtual?.nomeFantasia || 'Clínica'}`, xTexto, 13);
+
+      pdf.setFontSize(9);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(`CNPJ: ${clinicaAtual?.cnpj || ''}  |  Período: ${mesRef}  |  Total: ${document.getElementById('kpiTotal').textContent} atendimentos  |  Espera Média: ${document.getElementById('kpiTempoMedio').textContent}`, xTexto, 21);
+
+      pdf.autoTable({
+        startY: 36,
+        head: [['Data', 'Paciente', 'Profissional', 'Modalidade', 'Entrada', 'Atend. Médico', 'Espera', 'Status']],
+        body: registrosFiltradosAtual.map(r => [
+          r.data,
+          r.paciente,
+          r.profissional,
+          r.modalidade,
+          r.horaEntrada,
+          r.horaMedico,
+          r.tempoEspera,
+          r.status
+        ]),
+        styles: { fontSize: 8.5, cellPadding: 3 },
+        headStyles: { fillColor: [11, 44, 77], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [248, 250, 252] }
+      });
+
+      pdf.save(`relatorio-atendimentos-${document.getElementById('filtroMes').value}.pdf`);
+    });
+
+    function iniciarSincronizacaoTempoReal(clinicaId) {
+      const q = query(collection(db, "atendimentos"), where("clinicaId", "==", clinicaId));
+      onSnapshot(q, (snapshot) => {
+        todosAtendimentosClinica = [];
+        snapshot.forEach(docSnap => {
+          todosAtendimentosClinica.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        renderizarRelatorioMensal();
+      });
+    }
+
+    document.getElementById('filtroMes').addEventListener('change', renderizarRelatorioMensal);
+
     onAuthStateChanged(auth, async (user) => {
       const uid = user ? user.uid : sessionStorage.getItem('vitaesys_uid');
       if (!uid) {
@@ -271,7 +549,7 @@
         logoBase64Atual = clinicaAtual.logoBase64 || "";
         atualizarPreviewLogo(logoBase64Atual);
 
-        carregarRelatorioMensal();
+        iniciarSincronizacaoTempoReal(clinicaAtual.id);
       }
     });
 
@@ -298,59 +576,11 @@
         clinicaAtual = { ...clinicaAtual, ...atualizados };
         sessionStorage.setItem('vitaesys_clinica_dados', JSON.stringify(clinicaAtual));
         document.getElementById('headerNomeClinica').textContent = clinicaAtual.nomeFantasia;
-        alert("Dados e logotipo da clínica salvos! As novas fichas e impressões já usarão esta logo.");
+        alert("Dados e logotipo da clínica salvos!");
       } catch (err) {
         alert("Erro ao atualizar: " + err.message);
       }
     });
-
-    async function carregarRelatorioMensal() {
-      if (!clinicaAtual?.id) return;
-      const mesSelecionado = document.getElementById('filtroMes').value;
-
-      const q = query(
-        collection(db, "atendimentos"),
-        where("clinicaId", "==", clinicaAtual.id),
-        where("mesAno", "==", mesSelecionado)
-      );
-
-      const snap = await getDocs(q);
-      let total = 0, finalizados = 0, part = 0, conv = 0;
-      const linhas = [];
-
-      snap.forEach(d => {
-        const item = d.data();
-        total++;
-        if (item.status === 'finalizado') finalizados++;
-        if (item.tipo === 'Particular') part++;
-        if (item.tipo === 'Convênio') conv++;
-
-        const dataFmt = item.dataAtendimento ? item.dataAtendimento.split('-').reverse().join('/') : '--';
-        linhas.push(`
-          <tr class="hover:bg-slate-50">
-            <td class="py-2.5 px-3 text-slate-600">${dataFmt} ${item.horaAtendimento || ''}</td>
-            <td class="py-2.5 px-3 font-semibold text-[#0B2C4D]">${item.pacienteNome}</td>
-            <td class="py-2.5 px-3 text-slate-600">${item.medicoNome || '-'}</td>
-            <td class="py-2.5 px-3 text-slate-600">${item.tipo || '-'}</td>
-            <td class="py-2.5 px-3">
-              <span class="px-2 py-0.5 text-xs font-bold rounded-full ${item.status === 'finalizado' ? 'bg-teal-100 text-[#0B2C4D]' : 'bg-amber-100 text-amber-800'}">
-                ${item.status}
-              </span>
-            </td>
-          </tr>
-        `);
-      });
-
-      document.getElementById('kpiTotal').textContent = total;
-      document.getElementById('kpiFinalizados').textContent = finalizados;
-      document.getElementById('kpiModalidades').textContent = `${part} Part. / ${conv} Conv.`;
-
-      document.getElementById('tabelaRelatorio').innerHTML = linhas.length > 0
-        ? linhas.join('')
-        : '<tr><td colspan="5" class="text-center py-6 text-slate-400">Nenhum atendimento registrado neste mês.</td></tr>';
-    }
-
-    document.getElementById('filtroMes').addEventListener('change', carregarRelatorioMensal);
 
     document.getElementById('btnSair').addEventListener('click', async () => {
       sessionStorage.clear();

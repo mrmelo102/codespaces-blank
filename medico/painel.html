@@ -3,23 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel Clínico - VitaeSys</title>
+  <title>Consultório - VitaeSys | Atendimento Médico</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body class="bg-slate-100 min-h-screen flex flex-col justify-between">
 
-  <!-- Cabeçalho com Nome da Clínica -->
+  <!-- Cabeçalho com Identidade e Logo da Clínica -->
   <header class="bg-white border-b border-slate-200 px-6 py-3.5 shadow-sm">
     <div class="max-w-6xl mx-auto flex justify-between items-center">
-      <div>
-        <span id="headerNomeClinica" class="text-lg font-extrabold text-[#0B2C4D] block leading-tight">Carregando Clínica...</span>
-        <span class="text-[11px] font-medium text-slate-400">Consultório & Prontuário • Powered by <strong class="text-[#0B2C4D]">Vitae</strong><strong class="text-[#1EB5A6]">Sys</strong></span>
+      <div class="flex items-center gap-3">
+        <img id="headerLogoClinica" src="" alt="Logo" class="hidden h-10 w-10 object-contain rounded-lg border border-slate-200 bg-white p-0.5">
+        <div>
+          <span id="headerNomeClinica" class="text-lg font-extrabold text-[#0B2C4D] block leading-tight">Carregando Clínica...</span>
+          <span class="text-[11px] font-medium text-slate-400">Consultório & Prontuário • Powered by <strong class="text-[#0B2C4D]">Vitae</strong><strong class="text-[#1EB5A6]">Sys</strong></span>
+        </div>
       </div>
 
       <div class="flex items-center gap-4">
-        <span id="medicoLogado" class="text-xs font-semibold text-[#0B2C4D] bg-teal-50 px-3 py-1.5 rounded-full border border-teal-100">
-          Carregando perfil...
-        </span>
+        <span id="medicoLogado" class="text-xs font-semibold text-[#0B2C4D] bg-teal-50 border border-teal-200 px-3 py-1 rounded-full hidden sm:inline-block"></span>
         <button id="btnSair" type="button" class="text-sm font-semibold text-red-600 hover:text-red-700 hover:underline transition">
           Sair
         </button>
@@ -29,100 +31,80 @@
 
   <!-- Conteúdo Principal -->
   <main class="flex-grow p-4 md:p-6">
-    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
-      
-      <!-- COLUNA ESQUERDA: FILA DE ESPERA & CONCLUÍDOS -->
-      <div class="lg:col-span-5 space-y-6">
-        
-        <div class="bg-white p-5 rounded-2xl shadow-md border border-slate-100">
-          <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
-            <div>
-              <h2 class="text-base font-bold text-[#0B2C4D]">Fila de Espera</h2>
-              <p class="text-xs text-slate-500">Pacientes aguardando chamada</p>
-            </div>
-            <span id="contadorFila" class="px-2.5 py-1 text-xs font-bold rounded-full bg-[#0B2C4D] text-white">0</span>
-          </div>
+    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          <div id="listaFila" class="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-            <p class="text-sm text-slate-400 text-center py-6">Carregando fila...</p>
+      <!-- COLUNA ESQUERDA: FILA DE PACIENTES AGUARDANDO -->
+      <div class="bg-white p-5 rounded-2xl shadow-md border border-slate-100 flex flex-col h-fit">
+        <div class="border-b border-slate-100 pb-3 mb-4 flex justify-between items-center">
+          <div>
+            <h2 class="text-base font-bold text-[#0B2C4D]">Fila de Espera</h2>
+            <p class="text-xs text-slate-500">Pacientes aguardando seu atendimento</p>
           </div>
+          <span id="contadorFila" class="px-2.5 py-1 text-xs font-extrabold rounded-full bg-teal-100 text-[#0B2C4D]">0</span>
         </div>
 
-        <div class="bg-white p-5 rounded-2xl shadow-md border border-slate-100">
-          <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
-            <div>
-              <h2 class="text-base font-bold text-[#0B2C4D]">Finalizados Hoje</h2>
-              <p class="text-xs text-slate-500">Consultas encerradas</p>
-            </div>
-            <span id="contadorFinalizados" class="px-2.5 py-1 text-xs font-bold rounded-full bg-teal-100 text-[#0B2C4D]">0</span>
-          </div>
-
-          <div id="listaFinalizados" class="space-y-2.5 max-h-60 overflow-y-auto pr-1">
-            <p class="text-xs text-slate-400 text-center py-4">Nenhum atendimento finalizado hoje.</p>
-          </div>
+        <div id="listaFilaPacientes" class="space-y-3 max-h-[520px] overflow-y-auto pr-1">
+          <p class="text-xs text-slate-400 text-center py-6">Carregando fila...</p>
         </div>
-
       </div>
 
-      <!-- COLUNA DIREITA: PRONTUÁRIO DE ATENDIMENTO ATIVO -->
-      <div class="lg:col-span-7">
-        <div class="bg-white p-6 md:p-8 rounded-2xl shadow-md border border-slate-100 min-h-[540px] flex flex-col justify-between">
+      <!-- COLUNA DIREITA: ÁREA DE ATENDIMENTO / PRONTUÁRIO -->
+      <div class="lg:col-span-2 bg-white p-6 md:p-7 rounded-2xl shadow-md border border-slate-100">
+        
+        <!-- Estado Inicial (Nenhum paciente selecionado) -->
+        <div id="estadoVazioAtendimento" class="text-center py-16 space-y-3">
+          <div class="w-14 h-14 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center text-2xl">🩺</div>
+          <h3 class="text-lg font-bold text-[#0B2C4D]">Nenhum paciente em atendimento</h3>
+          <p class="text-sm text-slate-500 max-w-md mx-auto">
+            Selecione um paciente na <strong>Fila de Espera</strong> ao lado e clique em <strong>Atender Paciente</strong> para iniciar a consulta.
+          </p>
+        </div>
+
+        <!-- Formulário de Atendimento Ativo -->
+        <div id="areaAtendimentoAtivo" class="hidden space-y-6">
           
-          <div id="estadoVazio" class="flex-grow flex flex-col items-center justify-center text-center py-16">
-            <div class="w-16 h-16 rounded-2xl bg-teal-50 text-[#1EB5A6] flex items-center justify-center mb-4">
-              <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-              </svg>
+          <!-- Cabeçalho do Paciente em Atendimento -->
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+            <div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-[#1EB5A6] block">Paciente em Atendimento</span>
+              <h2 id="atendNomePaciente" class="text-xl font-extrabold text-[#0B2C4D]">Nome do Paciente</h2>
+              <p id="atendDetalhesPaciente" class="text-xs text-slate-500 mt-0.5">CPF • Nascimento • Modalidade</p>
             </div>
-            <h3 class="text-lg font-bold text-[#0B2C4D]">Nenhum Paciente em Atendimento</h3>
-            <p class="text-sm text-slate-500 max-w-sm mt-1">
-              Selecione um paciente na <strong>Fila de Espera</strong> ao lado para iniciar a consulta.
-            </p>
+
+            <div class="text-left sm:text-right">
+              <span class="text-[11px] text-slate-400 block">Entrada na Recepção</span>
+              <strong id="atendHoraEntrada" class="text-sm font-bold text-[#0B2C4D]">--:--</strong>
+            </div>
           </div>
 
-          <form id="formProntuario" class="hidden space-y-5">
+          <form id="formAtendimentoMedico" class="space-y-5">
             
-            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl">
-              <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
-                <div>
-                  <span class="text-[11px] font-bold uppercase tracking-wider text-[#1EB5A6]">Paciente em Atendimento</span>
-                  <h2 id="pacNome" class="text-xl font-bold text-[#0B2C4D]">--</h2>
-                  <p id="pacInfoSecundaria" class="text-xs text-slate-600 mt-1">--</p>
-                  <p id="pacEndereco" class="text-xs text-slate-500 mt-0.5">--</p>
-                </div>
-                <span id="pacModalidadeBadge" class="px-3 py-1 text-xs font-bold rounded-full bg-[#0B2C4D] text-white self-start">
-                  --
-                </span>
-              </div>
-              <div id="pacDetalhesConvenioPagamento" class="mt-3 pt-2.5 border-t border-slate-200 text-xs text-slate-700 hidden"></div>
+            <div>
+              <label class="block text-sm font-bold text-[#0B2C4D] mb-1">Anamnese / Evolução Clínica</label>
+              <textarea id="campoEvolucao" rows="4" placeholder="Queixa principal, exame físico e evolução clínica do paciente..." class="w-full p-3 border border-slate-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#1EB5A6]"></textarea>
             </div>
 
             <div>
-              <label class="block text-sm font-semibold text-[#0B2C4D]">Anamnese / Queixa Principal / Evolução Clínica *</label>
-              <textarea id="evolucaoClinica" rows="4" required placeholder="Descreva os sintomas, exame físico, diagnóstico e evolução clínica..." class="mt-1 w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#1EB5A6] outline-none text-sm"></textarea>
+              <label class="block text-sm font-bold text-[#0B2C4D] mb-1">Prescrição Medicamentosa / Receituário</label>
+              <textarea id="campoPrescricao" rows="4" placeholder="Medicamentos, posologia e orientações de uso..." class="w-full p-3 border border-slate-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#1EB5A6]"></textarea>
             </div>
 
             <div>
-              <label class="block text-sm font-semibold text-[#0B2C4D]">Conduta & Prescrição</label>
-              <textarea id="prescricaoMedica" rows="3" placeholder="Medicamentos prescritos, posologia ou conduta terapêutica..." class="mt-1 w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#1EB5A6] outline-none text-sm"></textarea>
+              <label class="block text-sm font-bold text-[#0B2C4D] mb-1">Orientações & Solicitações para a Recepção (Exames / Retorno)</label>
+              <textarea id="campoRetornoRecepcao" rows="3" placeholder="Ex: Agendar retorno em 15 dias, solicitar hemograma completo, emitir guia..." class="w-full p-3 border border-slate-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#1EB5A6]"></textarea>
             </div>
 
-            <div class="bg-teal-50/60 border border-teal-200 p-4 rounded-xl">
-              <label class="block text-sm font-bold text-[#0B2C4D] flex items-center gap-1.5">
-                <span>📋</span> Retorno / Solicitações para a Recepção *
-              </label>
-              <p class="text-xs text-slate-500 mb-2">
-                Aparecerá imediatamente no <strong>3º Quadro da Recepção</strong> da sua clínica.
-              </p>
-              <textarea id="retornoRecepcao" rows="3" required placeholder="Ex: Solicitar exames e agendar retorno em 15 dias." class="w-full p-3 border border-slate-300 bg-white rounded-lg focus:ring-2 focus:ring-[#1EB5A6] outline-none text-sm"></textarea>
-            </div>
-
+            <!-- Botões de Ação -->
             <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
-              <button type="button" id="btnCancelarAtendimento" class="sm:w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 px-4 rounded-xl transition">
-                Voltar / Cancelar
+              <button type="button" id="btnImprimirReceita" class="sm:w-1/3 bg-slate-100 hover:bg-slate-200 text-[#0B2C4D] border border-slate-300 font-semibold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Baixar Receita PDF
               </button>
-              <button type="submit" class="sm:w-2/3 bg-[#1EB5A6] hover:bg-[#17998c] text-white font-bold py-3 px-4 rounded-xl shadow-md transition flex items-center justify-center gap-2">
-                <span>Finalizar Consulta e Enviar Retorno</span>
+
+              <button type="submit" class="sm:w-2/3 bg-[#1EB5A6] hover:bg-[#17998c] text-white font-bold py-3 px-4 rounded-xl shadow-md transition flex items-center justify-center gap-2 text-sm">
+                <span>Finalizar Atendimento e Enviar à Recepção</span>
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
                 </svg>
@@ -132,6 +114,7 @@
           </form>
 
         </div>
+
       </div>
 
     </div>
@@ -146,41 +129,35 @@
     import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import { collection, doc, getDoc, updateDoc, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    let atendimentoSelecionadoId = null;
+    let clinicaAtual = null;
+    let medicoUid = null;
+    let medicoNome = "";
+    let filaAtendimentos = [];
+    let atendimentoSelecionado = null;
+    let horaInicioConsulta = null;
 
-    function calcularIdade(dataNasc) {
-      if (!dataNasc) return "";
-      const hoje = new Date();
-      const nasc = new Date(dataNasc + "T00:00:00");
-      let idade = hoje.getFullYear() - nasc.getFullYear();
-      const m = hoje.getMonth() - nasc.getMonth();
-      if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) idade--;
-      return `${idade} anos`;
+    function obterHoraAtualFormatada() {
+      const agora = new Date();
+      return `${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}`;
     }
 
     onAuthStateChanged(auth, async (user) => {
-      const uid = user ? user.uid : sessionStorage.getItem('vitaesys_uid');
-      if (!uid) {
+      medicoUid = user ? user.uid : sessionStorage.getItem('vitaesys_uid');
+      if (!medicoUid) {
         window.location.href = '../index.html';
         return;
       }
 
       let clinicaId = sessionStorage.getItem('vitaesys_clinica_id');
-      let clinicaCache = sessionStorage.getItem('vitaesys_clinica_dados');
-      let nomeMedico = sessionStorage.getItem('vitaesys_usuario_nome');
+      medicoNome = sessionStorage.getItem('vitaesys_usuario_nome') || "";
 
-      if (!clinicaId || !clinicaCache) {
-        const userSnap = await getDoc(doc(db, "usuarios", uid));
-        if (userSnap.exists()) {
-          const u = userSnap.data();
-          clinicaId = u.clinicaId;
-          nomeMedico = u.nome;
-          const cSnap = await getDoc(doc(db, "clinicas", clinicaId));
-          if (cSnap.exists()) {
-            clinicaCache = JSON.stringify({ id: clinicaId, ...cSnap.data() });
-            sessionStorage.setItem('vitaesys_clinica_id', clinicaId);
-            sessionStorage.setItem('vitaesys_clinica_dados', clinicaCache);
-          }
+      if (!clinicaId || !medicoNome) {
+        const uSnap = await getDoc(doc(db, "usuarios", medicoUid));
+        if (uSnap.exists()) {
+          clinicaId = uSnap.data().clinicaId;
+          medicoNome = uSnap.data().nome;
+          sessionStorage.setItem('vitaesys_clinica_id', clinicaId);
+          sessionStorage.setItem('vitaesys_usuario_nome', medicoNome);
         }
       }
 
@@ -189,176 +166,218 @@
         return;
       }
 
-      const clinicaObj = JSON.parse(clinicaCache);
-      document.getElementById('headerNomeClinica').textContent = clinicaObj.nomeFantasia || "Clínica";
-      document.getElementById('medicoLogado').textContent = `🩺 ${nomeMedico || 'Profissional'}`;
+      document.getElementById('medicoLogado').textContent = `🩺 ${medicoNome}`;
 
-      iniciarEscutaFila(clinicaId, uid);
+      const cSnap = await getDoc(doc(db, "clinicas", clinicaId));
+      if (cSnap.exists()) {
+        clinicaAtual = { id: clinicaId, ...cSnap.data() };
+        sessionStorage.setItem('vitaesys_clinica_dados', JSON.stringify(clinicaAtual));
+
+        document.getElementById('headerNomeClinica').textContent = clinicaAtual.nomeFantasia || "Clínica";
+        if (clinicaAtual.logoBase64) {
+          const hLogo = document.getElementById('headerLogoClinica');
+          hLogo.src = clinicaAtual.logoBase64;
+          hLogo.classList.remove('hidden');
+        }
+
+        escutarFilaDoMedico(clinicaId, medicoUid);
+      }
     });
 
-    document.getElementById('btnSair').addEventListener('click', async () => {
-      sessionStorage.clear();
-      await signOut(auth);
-      window.location.href = '../index.html';
-    });
-
-    // Filtra exclusivamente por clinicaId AND medicoId
-    function iniciarEscutaFila(clinicaId, medicoId) {
+    function escutarFilaDoMedico(clinicaId, uidMedico) {
       const q = query(
         collection(db, "atendimentos"),
         where("clinicaId", "==", clinicaId),
-        where("medicoId", "==", medicoId)
+        where("medicoId", "==", uidMedico)
       );
 
       onSnapshot(q, (snapshot) => {
-        const aguardando = [];
-        const finalizados = [];
-        const hojeStr = new Date().toISOString().split('T')[0];
-
+        filaAtendimentos = [];
         snapshot.forEach(docSnap => {
-          const dados = { id: docSnap.id, ...docSnap.data() };
+          const dados = docSnap.data();
           if (dados.status === 'aguardando' || dados.status === 'em_atendimento') {
-            aguardando.push(dados);
-          } else if (dados.status === 'finalizado' && dados.dataAtendimento === hojeStr) {
-            finalizados.push(dados);
+            filaAtendimentos.push({ id: docSnap.id, ...dados });
           }
         });
 
-        aguardando.sort((a, b) => (a.horaAtendimento || "").localeCompare(b.horaAtendimento || ""));
-        finalizados.sort((a, b) => (b.horaAtendimento || "").localeCompare(a.horaAtendimento || ""));
+        filaAtendimentos.sort((a, b) => {
+          const dtA = `${a.dataAtendimento || ''} ${a.horaAtendimento || ''}`;
+          const dtB = `${b.dataAtendimento || ''} ${b.horaAtendimento || ''}`;
+          return dtA.localeCompare(dtB);
+        });
 
-        renderizarFila(aguardando);
-        renderizarFinalizados(finalizados);
+        renderizarFila();
       });
     }
 
-    function renderizarFila(lista) {
-      const container = document.getElementById('listaFila');
-      document.getElementById('contadorFila').textContent = lista.length;
+    function renderizarFila() {
+      const container = document.getElementById('listaFilaPacientes');
+      document.getElementById('contadorFila').textContent = filaAtendimentos.length;
 
-      if (lista.length === 0) {
+      if (filaAtendimentos.length === 0) {
         container.innerHTML = `
           <div class="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-            <p class="text-sm text-slate-500">Nenhum paciente aguardando na fila.</p>
+            <p class="text-xs text-slate-500">Nenhum paciente aguardando na sua fila no momento.</p>
           </div>
         `;
         return;
       }
 
-      container.innerHTML = lista.map(pac => {
-        const idade = calcularIdade(pac.pacienteNascimento);
-        const isAtivo = pac.id === atendimentoSelecionadoId;
-        const bordaAtiva = isAtivo ? 'border-[#1EB5A6] bg-teal-50/40 ring-1 ring-[#1EB5A6]' : 'border-slate-200 bg-white hover:border-[#1EB5A6]';
+      container.innerHTML = filaAtendimentos.map(item => {
+        const isSelecionado = atendimentoSelecionado && atendimentoSelecionado.id === item.id;
+        const bordaAtiva = isSelecionado ? 'border-[#1EB5A6] bg-teal-50/40 ring-2 ring-[#1EB5A6]/30' : 'border-slate-200 bg-slate-50/60 hover:bg-white';
 
         return `
-          <div class="p-3.5 rounded-xl border ${bordaAtiva} transition shadow-sm">
+          <div class="p-3.5 rounded-xl border ${bordaAtiva} transition space-y-2.5">
             <div class="flex justify-between items-start gap-2">
               <div>
-                <h4 class="font-bold text-[#0B2C4D] text-sm">${pac.pacienteNome}</h4>
-                <p class="text-xs text-slate-500 mt-0.5">
-                  ${idade ? idade + ' • ' : ''}Chegada: <strong>${pac.horaAtendimento || '--:--'}</strong>
-                </p>
+                <h4 class="font-bold text-sm text-[#0B2C4D]">${item.pacienteNome}</h4>
+                <span class="text-[11px] text-slate-500 block">Chegada: <strong>${item.horaAtendimento || '--:--'}</strong> • ${item.tipo || 'Consulta'}</span>
               </div>
-              <span class="px-2 py-0.5 text-[11px] font-semibold rounded-md bg-slate-100 text-[#0B2C4D]">
-                ${pac.tipo || 'Consulta'}
+              <span class="px-2 py-0.5 text-[10px] font-bold rounded-full ${item.status === 'em_atendimento' ? 'bg-teal-100 text-[#0B2C4D]' : 'bg-amber-100 text-amber-800'}">
+                ${item.status === 'em_atendimento' ? 'Em Consulta' : 'Aguardando'}
               </span>
             </div>
 
-            <button type="button" onclick='selecionarPaciente(${JSON.stringify(pac).replace(/'/g, "&#39;")})' class="mt-3 w-full py-2 px-3 rounded-lg text-xs font-bold bg-[#0B2C4D] hover:bg-[#13406d] text-white transition">
-              ${isAtivo ? 'Em Atendimento Atual' : 'Chamar / Atender Paciente'}
+            <button type="button" onclick="iniciarAtendimento('${item.id}')" class="w-full py-2 bg-[#0B2C4D] hover:bg-[#13406d] text-white text-xs font-bold rounded-lg transition">
+              ${isSelecionado ? 'Em Atendimento Atual' : 'Atender Paciente'}
             </button>
           </div>
         `;
       }).join('');
     }
 
-    function renderizarFinalizados(lista) {
-      const container = document.getElementById('listaFinalizados');
-      document.getElementById('contadorFinalizados').textContent = lista.length;
+    // Inicia o atendimento e registra a hora exata em que o médico chamou o paciente
+    window.iniciarAtendimento = async (atendimentoId) => {
+      const item = filaAtendimentos.find(x => x.id === atendimentoId);
+      if (!item) return;
 
-      if (lista.length === 0) {
-        container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Nenhum atendimento finalizado hoje.</p>';
-        return;
-      }
-
-      container.innerHTML = lista.map(pac => `
-        <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 flex justify-between items-center">
-          <div>
-            <p class="text-sm font-bold text-[#0B2C4D]">${pac.pacienteNome}</p>
-            <p class="text-[11px] text-slate-500">${pac.tipo} • ${pac.horaAtendimento || ''}</p>
-          </div>
-          <span class="text-[11px] font-bold text-[#1EB5A6]">✓ Concluído</span>
-        </div>
-      `).join('');
-    }
-
-    window.selecionarPaciente = async (pac) => {
-      atendimentoSelecionadoId = pac.id;
-
-      document.getElementById('estadoVazio').classList.add('hidden');
-      document.getElementById('formProntuario').classList.remove('hidden');
-
-      const idade = calcularIdade(pac.pacienteNascimento);
-      const dataNascFmt = pac.pacienteNascimento ? pac.pacienteNascimento.split('-').reverse().join('/') : 'N/I';
-
-      document.getElementById('pacNome').textContent = pac.pacienteNome;
-      document.getElementById('pacInfoSecundaria').textContent = `CPF: ${pac.pacienteCpf || 'N/I'} • Nasc.: ${dataNascFmt} ${idade ? '(' + idade + ')' : ''}`;
-      document.getElementById('pacEndereco').textContent = `Endereço: ${pac.pacienteEndereco || 'Não informado'}`;
-      document.getElementById('pacModalidadeBadge').textContent = pac.tipo || 'Consulta';
-
-      const boxExtra = document.getElementById('pacDetalhesConvenioPagamento');
-      if (pac.tipo === 'Convênio') {
-        boxExtra.classList.remove('hidden');
-        boxExtra.innerHTML = `<strong>Convênio:</strong> ${pac.convenio || 'N/I'} &nbsp;|&nbsp; <strong>Carteirinha:</strong> ${pac.carteirinha || 'N/I'}`;
-      } else if (pac.tipo === 'Particular') {
-        boxExtra.classList.remove('hidden');
-        boxExtra.innerHTML = `<strong>Particular:</strong> ${pac.formaPagamento || 'N/I'} &nbsp;|&nbsp; <strong>Valor:</strong> R$ ${pac.valorConsulta || '0,00'} (${pac.statusPagamento || 'Pendente'})`;
-      } else {
-        boxExtra.classList.add('hidden');
-      }
-
-      document.getElementById('evolucaoClinica').value = pac.evolucao || "";
-      document.getElementById('prescricaoMedica').value = pac.prescricao || "";
-      document.getElementById('retornoRecepcao').value = pac.retornoRecepcao || "";
+      atendimentoSelecionado = item;
+      horaInicioConsulta = item.horaAtendimentoMedico || obterHoraAtualFormatada();
 
       try {
-        await updateDoc(doc(db, "atendimentos", pac.id), { status: "em_atendimento" });
-      } catch (e) { console.error(e); }
+        await updateDoc(doc(db, "atendimentos", atendimentoId), {
+          status: "em_atendimento",
+          horaAtendimentoMedico: horaInicioConsulta
+        });
+      } catch (err) {
+        console.error("Erro ao atualizar status:", err);
+      }
+
+      document.getElementById('estadoVazioAtendimento').classList.add('hidden');
+      document.getElementById('areaAtendimentoAtivo').classList.remove('hidden');
+
+      const dataNascFmt = item.pacienteNascimento ? item.pacienteNascimento.split('-').reverse().join('/') : 'N/I';
+      document.getElementById('atendNomePaciente').textContent = item.pacienteNome;
+      document.getElementById('atendDetalhesPaciente').textContent = `CPF: ${item.pacienteCpf || 'N/I'} • Nasc.: ${dataNascFmt} • ${item.tipo || 'Consulta'}`;
+      document.getElementById('atendHoraEntrada').textContent = `${item.horaAtendimento || '--:--'} (Chamado às ${horaInicioConsulta})`;
+
+      document.getElementById('campoEvolucao').value = item.evolucao || "";
+      document.getElementById('campoPrescricao').value = item.prescricao || "";
+      document.getElementById('campoRetornoRecepcao').value = item.retornoRecepcao || "";
+
+      renderizarFila();
     };
 
-    document.getElementById('btnCancelarAtendimento').addEventListener('click', async () => {
-      if (atendimentoSelecionadoId) {
-        try {
-          await updateDoc(doc(db, "atendimentos", atendimentoSelecionadoId), { status: "aguardando" });
-        } catch (e) { console.error(e); }
-      }
-      atendimentoSelecionadoId = null;
-      document.getElementById('formProntuario').reset();
-      document.getElementById('formProntuario').classList.add('hidden');
-      document.getElementById('estadoVazio').classList.remove('hidden');
-    });
-
-    document.getElementById('formProntuario').addEventListener('submit', async (e) => {
+    // Finaliza a consulta e grava o horário médico para o relatório do gestor
+    document.getElementById('formAtendimentoMedico').addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (!atendimentoSelecionadoId) return;
+      if (!atendimentoSelecionado) return;
+
+      const horaMedicoRegistro = horaInicioConsulta || obterHoraAtualFormatada();
 
       try {
-        await updateDoc(doc(db, "atendimentos", atendimentoSelecionadoId), {
-          evolucao: document.getElementById('evolucaoClinica').value.trim(),
-          prescricao: document.getElementById('prescricaoMedica').value.trim(),
-          retornoRecepcao: document.getElementById('retornoRecepcao').value.trim(),
+        await updateDoc(doc(db, "atendimentos", atendimentoSelecionado.id), {
+          evolucao: document.getElementById('campoEvolucao').value.trim(),
+          prescricao: document.getElementById('campoPrescricao').value.trim(),
+          retornoRecepcao: document.getElementById('campoRetornoRecepcao').value.trim(),
+          horaAtendimentoMedico: horaMedicoRegistro,
           status: "finalizado",
           finalizadoEm: serverTimestamp()
         });
 
-        alert("Consulta finalizada! Retorno enviado para a recepção.");
-        atendimentoSelecionadoId = null;
+        alert("Atendimento finalizado! O parecer foi enviado para a recepção e registrado no controle do gestor.");
+        atendimentoSelecionado = null;
+        horaInicioConsulta = null;
         e.target.reset();
-        document.getElementById('formProntuario').classList.add('hidden');
-        document.getElementById('estadoVazio').classList.remove('hidden');
+
+        document.getElementById('areaAtendimentoAtivo').classList.add('hidden');
+        document.getElementById('estadoVazioAtendimento').classList.remove('hidden');
       } catch (err) {
-        alert("Erro ao finalizar consulta: " + err.message);
+        alert("Erro ao finalizar atendimento: " + err.message);
       }
+    });
+
+    // Baixar Receita Médica em PDF com Logo da Clínica
+    document.getElementById('btnImprimirReceita').addEventListener('click', () => {
+      if (!atendimentoSelecionado) return;
+      const prescricao = document.getElementById('campoPrescricao').value.trim();
+      if (!prescricao) {
+        alert("Preencha o campo de Prescrição Medicamentosa antes de baixar a receita.");
+        document.getElementById('campoPrescricao').focus();
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF();
+
+      pdf.setFillColor(11, 44, 77);
+      pdf.rect(0, 0, 210, 34, 'F');
+
+      let xTexto = 14;
+      if (clinicaAtual?.logoBase64) {
+        try {
+          pdf.setFillColor(255, 255, 255);
+          pdf.roundedRect(14, 5, 24, 24, 2, 2, 'F');
+          pdf.addImage(clinicaAtual.logoBase64, 'PNG', 15.5, 6.5, 21, 21);
+          xTexto = 43;
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(15);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(clinicaAtual?.nomeFantasia || "Clínica", xTexto, 14);
+
+      pdf.setFontSize(8.5);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(`CNPJ: ${clinicaAtual?.cnpj || ''}  |  Tel: ${clinicaAtual?.telefone || ''}`, xTexto, 21);
+      pdf.text(`${clinicaAtual?.endereco || ''}`, xTexto, 27);
+
+      pdf.setTextColor(11, 44, 77);
+      pdf.setFontSize(13);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("RECEITUÁRIO MÉDICO", 14, 47);
+      pdf.setDrawColor(30, 181, 166);
+      pdf.line(14, 49, 196, 49);
+
+      pdf.setTextColor(40, 40, 40);
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(`Paciente: ${atendimentoSelecionado.pacienteNome}`, 14, 58);
+      pdf.text(`CPF: ${atendimentoSelecionado.pacienteCpf || 'N/I'}`, 140, 58);
+
+      const linhasPrescricao = pdf.splitTextToSize(prescricao, 182);
+      pdf.text(linhasPrescricao, 14, 72);
+
+      pdf.setDrawColor(80, 80, 80);
+      pdf.line(55, 250, 155, 250);
+      pdf.setFontSize(9.5);
+      pdf.text(`${medicoNome}`, 105, 256, { align: "center" });
+      pdf.setFontSize(8.5);
+      pdf.setTextColor(110, 110, 110);
+      pdf.text(`${clinicaAtual?.nomeFantasia || 'Clínica'}`, 105, 261, { align: "center" });
+
+      const nomeArq = atendimentoSelecionado.pacienteNome.toLowerCase().replace(/\s+/g, '-');
+      pdf.save(`receita-${nomeArq}.pdf`);
+    });
+
+    document.getElementById('btnSair').addEventListener('click', async () => {
+      sessionStorage.clear();
+      await signOut(auth);
+      window.location.href = '../index.html';
     });
   </script>
 </body>
