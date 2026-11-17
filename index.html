@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acesso - VitaeSys | Sistema Multi-Clínicas</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-slate-100 via-teal-50/40 to-sky-50 min-h-screen flex flex-col justify-between relative">
+
+  <!-- Barra Superior com Menu Suspenso (3 linhas) -->
+  <header class="w-full p-4 flex justify-between items-center">
+    <div class="flex items-center gap-2 text-[#0B2C4D] font-semibold text-sm">
+      <span class="w-2.5 h-2.5 rounded-full bg-[#1EB5A6] inline-block"></span>
+      <span>VitaeSys Cloud Multi-Clínicas</span>
+    </div>
+
+    <div class="relative">
+      <button id="btnMenu" type="button" class="p-2.5 rounded-lg bg-white shadow-sm border border-slate-200 hover:bg-slate-50 text-[#0B2C4D] focus:outline-none transition" aria-label="Menu">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+
+      <div id="menuDropdown" class="hidden absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-lg border border-slate-100 py-2 z-50">
+        <div class="px-4 py-2 border-b border-slate-100">
+          <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Simulação Rápida (SaaS)</p>
+        </div>
+        <button type="button" onclick="criarClinicaTesteCompleta()" class="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-teal-50 hover:text-[#0B2C4D] flex items-center gap-2 transition">
+          <span>🏥</span> Gerar Clínica Teste (Admin + Méd. + Rec.)
+        </button>
+        <div class="border-t border-slate-100 mt-1 pt-1">
+          <button type="button" onclick="alert('VitaeSys Multi-Clínicas v2.0\nCada clínica possui ambiente isolado, código próprio de equipe e fichas personalizadas.')" class="w-full text-left px-4 py-2 text-xs text-slate-500 hover:bg-slate-50">
+            Sobre o VitaeSys
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Cartão Central -->
+  <main class="flex-grow flex items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-100 w-full max-w-md">
+      
+      <!-- Logo VitaeSys -->
+      <div class="flex flex-col items-center mb-6 text-center">
+        <div class="flex items-center gap-2.5">
+          <svg class="w-12 h-12" viewBox="0 0 64 64" fill="none">
+            <defs>
+              <linearGradient id="vitaeGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#0B2C4D"/>
+                <stop offset="100%" stop-color="#1EB5A6"/>
+              </linearGradient>
+            </defs>
+            <path d="M32 54C32 54 10 39.5 10 23.5C10 16.5 15.5 11 22.5 11C26.8 11 30.6 13.2 32 16.5C33.4 13.2 37.2 11 41.5 11C48.5 11 54 16.5 54 23.5C54 39.5 32 54 32 54Z" stroke="url(#vitaeGrad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 31H18L22 21L28 41L33 27L37 31H44" stroke="url(#vitaeGrad)" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="47" cy="31" r="3.5" stroke="#1EB5A6" stroke-width="3"/>
+          </svg>
+          <div class="text-left">
+            <div class="text-3xl font-extrabold tracking-tight leading-none">
+              <span class="text-[#0B2C4D]">Vitae</span><span class="text-[#1EB5A6]">Sys</span>
+            </div>
+            <p class="text-[9px] font-bold text-[#0B2C4D] tracking-wider uppercase mt-1 leading-tight">
+              Tecnologia que impulsiona a saúde<br>
+              <span class="text-slate-500 font-semibold">Gestão inteligente multi-clínicas</span>
+            </p>
+          </div>
+        </div>
+
+        <p id="subtituloTela" class="text-xs font-medium text-slate-400 uppercase tracking-wider mt-4">
+          Acesso ao Painel
+        </p>
+      </div>
+
+      <!-- Mensagens de Feedback -->
+      <div id="feedbackBox" class="hidden mb-4 p-3 rounded-lg text-sm font-medium"></div>
+
+      <!-- 1. LOGIN -->
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-[#0B2C4D]">E-mail</label>
+          <input type="email" id="loginEmail" required placeholder="seu@email.com" class="mt-1 w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#1EB5A6] outline-none">
+        </div>
+        
+        <div>
+          <div class="flex justify-between items-center">
+            <label class="block text-sm font-medium text-[#0B2C4D]">Senha</label>
+            <button type="button" onclick="alternarTela('recuperar')" class="text-xs text-[#1EB5A6] hover:text-[#0B2C4D] hover:underline font-semibold transition">
+              Esqueceu a senha?
+            </button>
+          </div>
+          <input type="password" id="loginSenha" required placeholder="••••••••" class="mt-1 w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#1EB5A6] outline-none">
+        </div>
+
+        <button type="submit" class="w-full bg-[#0B2C4D] hover:bg-[#13406d] text-white font-semibold py-2.5 rounded-lg shadow-sm transition">
+          Entrar no Sistema
+        </button>
+
+        <p class="text-center text-sm text-slate-600 pt-2">
+          Ainda não possui acesso? 
+          <button type="button" onclick="alternarTela('cadastro')" class="text-[#1EB5A6] hover:text-[#0B2C4D] font-bold hover:underline transition">
+            Cadastrar Clínica ou Equipe
+          </button>
+        </p>
+      </form>
+
+      <!-- 2. CADASTRO (NOVA CLÍNICA OU EQUIPE VINCULADA) -->
+      <form id="cadastroForm" class="hidden space-y-4">
+        
+        <!-- Seletor de Modo de Cadastro -->
+        <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
+          <button type="button" id="btnModoEquipe" onclick="alternarModoCadastro('equipe')" class="py-2 text-xs font-bold rounded-lg bg-white text-[#0B2C4D] shadow-sm transition">
+            Sou da Equipe
+          </button>
+          <button type="button" id="btnModoNovaClinica" onclick="alternarModoCadastro('nova_clinica')" class="py-2 text-xs font-bold rounded-lg text-slate-500 hover:text-[#0B2C4D] transition">
+            Cadastrar Clínica
+          </button>
+        </div>
+
+        <!-- BLOCO A: ENTRAR EM CLÍNICA EXISTENTE (EQUIPE) -->
+        <div id="blocoCadastroEquipe" class="space-y-3 bg-teal-50/60 border border-teal-200 p-3.5 rounded-xl">
+          <div>
+            <label class="block text-xs font-bold text-[#0B2C4D] uppercase">Código da Clínica *</label>
+            <input type="text" id="cadCodigoClinica" placeholder="Ex: ODONTO-482" class="mt-1 w-full p-2.5 border border-slate-300 bg-white rounded-lg uppercase focus:ring-2 focus:ring-[#1EB5A6] outline-none text-sm font-semibold">
+            <p class="text-[11px] text-slate-500 mt-1">Solicite o código ao administrador da sua clínica.</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-[#0B2C4D]">Seu Cargo *</label>
+            <select id="cadCargoEquipe" class="mt-1 w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#1EB5A6] outline-none bg-white text-sm">
+              <option value="recepcao">Recepção / Triagem</option>
+              <option value="medico">Médico(a) / Dentista / Profissional</option>
+              <option value="admin">Administração</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- BLOCO B: CRIAR NOVA CLÍNICA (DONO / GESTOR) -->
+        <div id="blocoCadastroNovaClinica" class="hidden space-y-3 bg-sky-50/70 border border-sky-200 p-3.5 rounded-xl">
+          <p class="text-xs font-bold text-[#0B2C4D] uppercase">Dados da Clínica (Sairão nas Fichas)</p>
+          <div>
+            <label class="block text-xs font-medium text-[#0B2C4D]">Nome Fantasia da Clínica *</label>
+            <input type="text" id="clinicaNome" placeholder="Ex: Odonto+ Clínica Odontológica" class="mt-1 w-full p-2 border border-slate-300 bg-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#1EB5A6]">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-medium text-[#0B2C4D]">CNPJ *</label>
+              <input type="text" id="clinicaCnpj" placeholder="00.000.000/0001-00" class="mt-1 w-full p-2 border border-slate-300 bg-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#1EB5A6]">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-[#0B2C4D]">Telefone *</label>
+              <input type="text" id="clinicaTelefone" placeholder="(00) 00000-0000" class="mt-1 w-full p-2 border border-slate-300 bg-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#1EB5A6]">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-[#0B2C4D]">Endereço Completo da Clínica *</label>
+            <input type="text" id="clinicaEndereco" placeholder="Av. Principal, 100 - Centro, Cidade/UF" class="mt-1 w-full p-2 border border-slate-300 bg-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#1EB5A6]">
+          </div>
+        </div>
+
+        <!-- DADOS PESSOAIS DO USUÁRIO -->
+        <div>
+          <label class="block text-sm font-medium text-[#0B2C4D]">Seu Nome Completo *</label>
+          <input type="text" id="cadNome" required placeholder="Ex: Dr. Carlos Mendes" class="mt-1 w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#1EB5A6] outline-none">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-[#0B2C4D]">E-mail de Acesso *</label>
+          <input type="email" id="cadEmail" required placeholder="seu@email.com" class="mt-1 w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#1EB5A6] outline-none">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-[#0B2C4D]">Senha (mín. 6 caracteres) *</label>
+          <input type="password" id="cadSenha" required minlength="6" placeholder="Crie uma senha" class="mt-1 w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#1EB5A6] outline-none">
+        </div>
+
+        <button type="submit" class="w-full bg-[#1EB5A6] hover:bg-[#17998c] text-white font-semibold py-2.5 rounded-lg shadow-sm transition">
+          Finalizar Cadastro
+        </button>
+
+        <p class="text-center text-sm text-slate-600 pt-2">
+          Já possui cadastro? 
+          <button type="button" onclick="alternarTela('login')" class="text-[#0B2C4D] font-bold hover:underline">
+            Fazer Login
+          </button>
+        </p>
+      </form>
+
+      <!-- 3. RECUPERAR SENHA -->
+      <form id="recuperarForm" class="hidden space-y-4">
+        <p class="text-sm text-slate-600">
+          Digite o e-mail cadastrado abaixo. Enviaremos um link para você redefinir sua senha.
+        </p>
+
+        <div>
+          <label class="block text-sm font-medium text-[#0B2C4D]">E-mail Cadastrado</label>
+          <input type="email" id="recEmail" required placeholder="seu@email.com" class="mt-1 w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#1EB5A6] outline-none">
+        </div>
+
+        <button type="submit" class="w-full bg-[#0B2C4D] hover:bg-[#13406d] text-white font-semibold py-2.5 rounded-lg shadow-sm transition">
+          Enviar Link de Recuperação
+        </button>
+
+        <p class="text-center text-sm text-slate-600 pt-2">
+          Lembrou a senha? 
+          <button type="button" onclick="alternarTela('login')" class="text-[#1EB5A6] font-bold hover:underline">
+            Voltar ao Login
+          </button>
+        </p>
+      </form>
+
+    </div>
+  </main>
+
+  <footer class="text-center py-4 text-xs text-slate-400">
+    &copy; 2026 <strong class="text-[#0B2C4D]">Vitae</strong><strong class="text-[#1EB5A6]">Sys</strong> — Tecnologia que impulsiona a saúde
+  </footer>
+
+  <script type="module">
+    import { auth, db } from './js/firebase-config.js';
+    import { 
+      signInWithEmailAndPassword, 
+      createUserWithEmailAndPassword, 
+      sendPasswordResetEmail 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { doc, getDoc, setDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    let modoCadastro = 'equipe';
+
+    const btnMenu = document.getElementById('btnMenu');
+    const menuDropdown = document.getElementById('menuDropdown');
+
+    btnMenu.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menuDropdown.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', () => {
+      menuDropdown.classList.add('hidden');
+    });
+
+    function mostrarMensagem(texto, tipo = 'erro') {
+      const box = document.getElementById('feedbackBox');
+      box.textContent = texto;
+      box.classList.remove('hidden', 'bg-red-50', 'text-red-600', 'bg-teal-50', 'text-[#0B2C4D]');
+      
+      if (tipo === 'sucesso') {
+        box.classList.add('bg-teal-50', 'text-[#0B2C4D]');
+      } else {
+        box.classList.add('bg-red-50', 'text-red-600');
+      }
+    }
+
+    window.alternarTela = (tela) => {
+      document.getElementById('feedbackBox').classList.add('hidden');
+      document.getElementById('loginForm').classList.add('hidden');
+      document.getElementById('cadastroForm').classList.add('hidden');
+      document.getElementById('recuperarForm').classList.add('hidden');
+
+      const subtitulo = document.getElementById('subtituloTela');
+
+      if (tela === 'login') {
+        document.getElementById('loginForm').classList.remove('hidden');
+        subtitulo.textContent = 'Acesso ao Painel';
+      } else if (tela === 'cadastro') {
+        document.getElementById('cadastroForm').classList.remove('hidden');
+        subtitulo.textContent = 'Criar Conta';
+        alternarModoCadastro(modoCadastro);
+      } else if (tela === 'recuperar') {
+        document.getElementById('recuperarForm').classList.remove('hidden');
+        subtitulo.textContent = 'Recuperação de Senha';
+      }
+    };
+
+    window.alternarModoCadastro = (modo) => {
+      modoCadastro = modo;
+      const btnEquipe = document.getElementById('btnModoEquipe');
+      const btnNova = document.getElementById('btnModoNovaClinica');
+      const blocoEquipe = document.getElementById('blocoCadastroEquipe');
+      const blocoNova = document.getElementById('blocoCadastroNovaClinica');
+
+      if (modo === 'equipe') {
+        btnEquipe.classList.add('bg-white', 'text-[#0B2C4D]', 'shadow-sm');
+        btnEquipe.classList.remove('text-slate-500');
+        btnNova.classList.remove('bg-white', 'text-[#0B2C4D]', 'shadow-sm');
+        btnNova.classList.add('text-slate-500');
+
+        blocoEquipe.classList.remove('hidden');
+        blocoNova.classList.add('hidden');
+
+        document.getElementById('cadCodigoClinica').required = true;
+        document.getElementById('clinicaNome').required = false;
+        document.getElementById('clinicaCnpj').required = false;
+        document.getElementById('clinicaTelefone').required = false;
+        document.getElementById('clinicaEndereco').required = false;
+      } else {
+        btnNova.classList.add('bg-white', 'text-[#0B2C4D]', 'shadow-sm');
+        btnNova.classList.remove('text-slate-500');
+        btnEquipe.classList.remove('bg-white', 'text-[#0B2C4D]', 'shadow-sm');
+        btnEquipe.classList.add('text-slate-500');
+
+        blocoNova.classList.remove('hidden');
+        blocoEquipe.classList.add('hidden');
+
+        document.getElementById('cadCodigoClinica').required = false;
+        document.getElementById('clinicaNome').required = true;
+        document.getElementById('clinicaCnpj').required = true;
+        document.getElementById('clinicaTelefone').required = true;
+        document.getElementById('clinicaEndereco').required = true;
+      }
+    };
+
+    // Carrega dados da clínica e salva sessão completa antes de redirecionar
+    async function iniciarSessaoClinica(uid, userData) {
+      if (!userData.clinicaId) {
+        mostrarMensagem("Este usuário não está vinculado a nenhuma clínica.");
+        return;
+      }
+
+      const clinicaSnap = await getDoc(doc(db, "clinicas", userData.clinicaId));
+      if (!clinicaSnap.exists()) {
+        mostrarMensagem("Clínica vinculada não encontrada no sistema.");
+        return;
+      }
+
+      const clinicaData = clinicaSnap.data();
+      if (clinicaData.ativo === false) {
+        mostrarMensagem("O acesso desta clínica está suspenso. Entre em contato com o suporte VitaeSys.");
+        return;
+      }
+
+      sessionStorage.setItem('vitaesys_uid', uid);
+      sessionStorage.setItem('vitaesys_cargo', userData.cargo);
+      sessionStorage.setItem('vitaesys_usuario_nome', userData.nome);
+      sessionStorage.setItem('vitaesys_clinica_id', userData.clinicaId);
+      sessionStorage.setItem('vitaesys_clinica_dados', JSON.stringify({
+        id: userData.clinicaId,
+        ...clinicaData
+      }));
+
+      if (userData.cargo === 'recepcao') window.location.href = './recepcao/cadastro.html';
+      else if (userData.cargo === 'medico') window.location.href = './medico/painel.html';
+      else if (userData.cargo === 'admin') window.location.href = './admin/relatorios.html';
+      else mostrarMensagem("Cargo não configurado no perfil.");
+    }
+
+    // 1. LOGIN
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const senha = document.getElementById('loginSenha').value;
+
+      try {
+        const cred = await signInWithEmailAndPassword(auth, email, senha);
+        const docSnap = await getDoc(doc(db, "usuarios", cred.user.uid));
+
+        if (docSnap.exists()) {
+          await iniciarSessaoClinica(cred.user.uid, docSnap.data());
+        } else {
+          mostrarMensagem("Perfil não encontrado no banco de dados.");
+        }
+      } catch (error) {
+        mostrarMensagem("E-mail ou senha inválidos.");
+      }
+    });
+
+    // 2. CADASTRO (NOVA CLÍNICA OU EQUIPE)
+    document.getElementById('cadastroForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nomeUsuario = document.getElementById('cadNome').value.trim();
+      const email = document.getElementById('cadEmail').value.trim();
+      const senha = document.getElementById('cadSenha').value;
+
+      try {
+        let clinicaId = "";
+        let cargoFinal = "";
+
+        if (modoCadastro === 'nova_clinica') {
+          const nomeFantasia = document.getElementById('clinicaNome').value.trim();
+          const cnpj = document.getElementById('clinicaCnpj').value.trim();
+          const telefone = document.getElementById('clinicaTelefone').value.trim();
+          const endereco = document.getElementById('clinicaEndereco').value.trim();
+
+          // Gera código amigável único para a clínica (ex: ODONTO-482)
+          const prefixo = nomeFantasia.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z]/g, "").substring(0, 6).toUpperCase() || "CLIN";
+          const num = Math.floor(100 + Math.random() * 900);
+          const codigoAcesso = `${prefixo}-${num}`;
+
+          const cred = await createUserWithEmailAndPassword(auth, email, senha);
+          clinicaId = `clinica_${Date.now()}`;
+          cargoFinal = "admin";
+
+          await setDoc(doc(db, "clinicas", clinicaId), {
+            nomeFantasia,
+            cnpj,
+            telefone,
+            endereco,
+            emailContato: email,
+            codigoAcesso,
+            ativo: true,
+            criadoEm: serverTimestamp()
+          });
+
+          const userData = {
+            nome: nomeUsuario,
+            cargo: cargoFinal,
+            clinicaId: clinicaId
+          };
+
+          await setDoc(doc(db, "usuarios", cred.user.uid), userData);
+
+          alert(`Clínica "${nomeFantasia}" cadastrada com sucesso!\n\nCÓDIGO DA CLÍNICA PARA SUA EQUIPE:\n${codigoAcesso}\n\nGuarde este código para médicos e recepcionistas se cadastrarem.`);
+          await iniciarSessaoClinica(cred.user.uid, userData);
+
+        } else {
+          // Cadastro de Equipe vinculada a uma clínica existente pelo Código
+          const codigoDigitado = document.getElementById('cadCodigoClinica').value.trim().toUpperCase();
+          cargoFinal = document.getElementById('cadCargoEquipe').value;
+
+          const qClinica = query(collection(db, "clinicas"), where("codigoAcesso", "==", codigoDigitado));
+          const snapClinica = await getDocs(qClinica);
+
+          if (snapClinica.empty) {
+            mostrarMensagem("Código da clínica inválido. Verifique com o administrador da sua clínica.");
+            return;
+          }
+
+          clinicaId = snapClinica.docs[0].id;
+          const cred = await createUserWithEmailAndPassword(auth, email, senha);
+
+          const userData = {
+            nome: nomeUsuario,
+            cargo: cargoFinal,
+            clinicaId: clinicaId
+          };
+
+          await setDoc(doc(db, "usuarios", cred.user.uid), userData);
+          mostrarMensagem("Conta vinculada com sucesso! Entrando...", "sucesso");
+          setTimeout(() => iniciarSessaoClinica(cred.user.uid, userData), 800);
+        }
+
+      } catch (error) {
+        if (error.code === 'auth/email-already-in-use') {
+          mostrarMensagem("Este e-mail já está cadastrado.");
+        } else {
+          mostrarMensagem("Erro ao cadastrar: " + error.message);
+        }
+      }
+    });
+
+    // 3. RECUPERAR SENHA
+    document.getElementById('recuperarForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('recEmail').value;
+
+      try {
+        await sendPasswordResetEmail(auth, email);
+        mostrarMensagem("E-mail de recuperação enviado! Verifique sua caixa de entrada.", "sucesso");
+      } catch (error) {
+        mostrarMensagem("Erro ao enviar: Verifique se o e-mail está correto.");
+      }
+    });
+
+    // Gerador de Clínica Teste completa para demonstrar isolamento
+    window.criarClinicaTesteCompleta = async () => {
+      const num = Math.floor(100 + Math.random() * 900);
+      const clinicaId = `clinica_teste_${num}`;
+      const codigoAcesso = `ODONTO-${num}`;
+      const nomeClinica = `Odonto+ Unidade ${num}`;
+      const emailAdmin = `gestor${num}@teste.com`;
+      const senhaPadrao = "123456";
+
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, emailAdmin, senhaPadrao);
+        
+        await setDoc(doc(db, "clinicas", clinicaId), {
+          nomeFantasia: nomeClinica,
+          cnpj: `12.345.678/0001-${String(num).slice(0,2)}`,
+          telefone: `(92) 99${num}-0000`,
+          endereco: `Av. Exemplo SaaS, Nº ${num} - Centro`,
+          emailContato: emailAdmin,
+          codigoAcesso,
+          ativo: true,
+          criadoEm: serverTimestamp()
+        });
+
+        const userData = {
+          nome: `Gestor ${nomeClinica}`,
+          cargo: "admin",
+          clinicaId
+        };
+
+        await setDoc(doc(db, "usuarios", cred.user.uid), userData);
+
+        alert(`Clínica de Teste Criada!\n\nClínica: ${nomeClinica}\nCódigo da Clínica: ${codigoAcesso}\nLogin Gestor: ${emailAdmin}\nSenha: ${senhaPadrao}\n\nUse o código ${codigoAcesso} para criar um Médico e uma Recepção desta mesma clínica!`);
+        await iniciarSessaoClinica(cred.user.uid, userData);
+      } catch (err) {
+        alert("Erro ao gerar clínica teste: " + err.message);
+      }
+    };
+  </script>
+</body>
+</html>

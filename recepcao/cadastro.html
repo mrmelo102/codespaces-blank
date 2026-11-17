@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recepção - VitaeSys | Cadastro e Triagem</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    @media print {
+      body * { visibility: hidden; }
+      #areaImpressaoFicha, #areaImpressaoFicha * { visibility: visible; }
+      #areaImpressaoFicha {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-shadow: none !important;
+        border: none !important;
+      }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col justify-between">
+
+  <!-- Cabeçalho com Identidade e Logo da Clínica Logada -->
+  <header class="bg-white border-b border-slate-200 px-6 py-3.5 shadow-sm">
+    <div class="max-w-5xl mx-auto flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <img id="headerLogoClinica" src="" alt="Logo" class="hidden h-10 w-10 object-contain rounded-lg border border-slate-200 bg-white p-0.5">
+        <div>
+          <span id="headerNomeClinica" class="text-lg font-extrabold text-[#0B2C4D] block leading-tight">Carregando Clínica...</span>
+          <span class="text-[11px] font-medium text-slate-400">Recepção & Triagem • Powered by <strong class="text-[#0B2C4D]">Vitae</strong><strong class="text-[#1EB5A6]">Sys</strong></span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <span id="usuarioLogado" class="text-xs font-medium text-slate-500 hidden md:inline"></span>
+        <button id="btnSair" type="button" class="text-sm font-semibold text-red-600 hover:text-red-700 hover:underline transition">
+          Sair
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Conteúdo Principal -->
+  <main class="flex-grow p-4 md:p-6 space-y-6">
+    
+    <!-- CARTÃO PRINCIPAL: CADASTRO E SOLICITAÇÃO -->
+    <div class="max-w-5xl mx-auto bg-white p-6 md:p-8 rounded-2xl shadow-md border border-slate-100">
+      
+      <div class="border-b border-slate-100 pb-4 mb-6">
+        <h1 class="text-xl font-bold text-[#0B2C4D]">Cadastro de Paciente & Solicitação</h1>
+        <p class="text-xs text-slate-500 mt-0.5">Os registros e fichas impressas serão vinculados automaticamente à sua clínica</p>
+      </div>
+
+      <form id="formPaciente" class="space-y-6">
+        
+        <!-- SEÇÃO 1: DADOS PESSOAIS + ENDEREÇO -->
+        <div>
+          <h2 class="text-xs font-bold text-[#1EB5A6] uppercase tracking-wider mb-3">1. Dados do Paciente</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="md:col-span-2">
+              <label class="block text-sm font-medium text-[#0B2C4D]">Nome Completo *</label>
+              <input type="text" id="nome" required placeholder="Nome completo do paciente" class="mt-1 w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#1EB5A6] outline-none">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-[#0B2C4D]">Data de Nascimento *</label>
+              <input type="date" id="dataNascimento" required class="mt-1 w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#1EB5A6] outline-none">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-[#0B2C4D]">CPF *</label>
+              <input type="text" id="cpf" inputmode="numeric" maxlength="14" required placeholder="000.000.000-00" class="mt-1 w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#1EB5A6] outline-none">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-[#0B2C4D]">Telefone / WhatsApp *</label>
+              <input type="tel" id="telefone" inputmode="numeric" maxlength="15" required placeholder="(00) 00000-0000" class="mt-1 w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#1EB5A6] outline-none">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-[#0B2C4D]">E-mail <span class="text-xs text-slate-400 font-normal">(opcional)</span></label>
+              <input type="email" id="email" placeholder="paciente@email.com" class="mt-1 w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#1EB5A6] outline-none">
+            </div>
+
+            <div class="md:col-span-3">
+              <label class="block text-sm font-medium text-[#0B2C4D]">Endereço Completo *</label>
+              <input type="text" id="endereco" required placeholder="Rua, número, complemento, bairro e cidade" class="mt-1 w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#1EB5A6] outline-none">
+            </div>
+          </div>
+        </div>
+
+        <hr class="border-slate-100">
+
+        <!-- SEÇÃO 2: DADOS DO ATENDIMENTO -->
+        <div>
+          <h2 class="text-xs font-bold text-[#1EB5A6] uppercase tracking-wider mb-3">2. Dados do Atendimento</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-[#0B2C4D]">Profissional Responsável *</label>
+              <select id="medicoSelect" required class="mt-1 w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#1EB5A6] outline-none bg-white">
+                <option value="">Carregando profissionais...</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-[#0B2C4D]">Modalidade *</label>
+              <select id="tipo" required class="mt-1 w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#1EB5A6] outline-none bg-white">
+                <option value="">Selecione...</option>
+                <option value="Particular">Particular</option>
+                <option value="Convênio">Convênio</option>
+                <option value="Retorno">Retorno</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-sm font-medium text-[#0B2C4D]">Data *</label>
+                <input type="date" id="dataAtendimento" required class="mt-1 w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#1EB5A6] outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-[#0B2C4D]">Hora *</label>
+                <input type="time" id="horaAtendimento" required class="mt-1 w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#1EB5A6] outline-none">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BLOCO CONDICIONAL A: CONVÊNIO -->
+        <div id="blocoConvenio" class="hidden bg-sky-50/70 border border-sky-200 p-4 rounded-xl space-y-3">
+          <h3 class="text-sm font-bold text-[#0B2C4D] flex items-center gap-2">
+            <span>💳</span> Informações do Convênio
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-[#0B2C4D]">Nome do Convênio / Operadora *</label>
+              <input type="text" id="nomeConvenio" placeholder="Ex: Unimed, Bradesco Saúde, Amil..." class="mt-1 w-full p-2.5 border border-slate-300 bg-white rounded-lg focus:ring-2 focus:ring-[#1EB5A6] outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-[#0B2C4D]">Número da Carteirinha *</label>
+              <input type="text" id="numeroCarteirinha" placeholder="Digite o número completo" class="mt-1 w-full p-2.5 border border-slate-300 bg-white rounded-lg focus:ring-2 focus:ring-[#1EB5A6] outline-none">
+            </div>
+          </div>
+        </div>
+
+        <!-- BLOCO CONDICIONAL B: PARTICULAR (PAGAMENTO) -->
+        <div id="blocoParticular" class="hidden bg-emerald-50/70 border border-emerald-200 p-4 rounded-xl space-y-3">
+          <h3 class="text-sm font-bold text-[#0B2C4D] flex items-center gap-2">
+            <span>💰</span> Informações de Pagamento (Atendimento Particular)
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-[#0B2C4D]">Forma de Pagamento *</label>
+              <select id="formaPagamento" class="mt-1 w-full p-2.5 border border-slate-300 bg-white rounded-lg focus:ring-2 focus:ring-[#1EB5A6] outline-none">
+                <option value="">Selecione...</option>
+                <option value="Pix">Pix</option>
+                <option value="Débito">Cartão de Débito</option>
+                <option value="Crédito">Cartão de Crédito</option>
+                <option value="Dinheiro">Dinheiro</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-[#0B2C4D]">Valor da Consulta (R$)</label>
+              <input type="text" id="valorConsulta" placeholder="Ex: 250,00" class="mt-1 w-full p-2.5 border border-slate-300 bg-white rounded-lg focus:ring-2 focus:ring-[#1EB5A6] outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-[#0B2C4D]">Situação do Pagamento</label>
+              <select id="statusPagamento" class="mt-1 w-full p-2.5 border border-slate-300 bg-white rounded-lg focus:ring-2 focus:ring-[#1EB5A6] outline-none">
+                <option value="Pago">Pago na Recepção</option>
+                <option value="Pendente">Pagar após consulta</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOTÕES DE AÇÃO -->
+        <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
+          <button type="button" id="btnBaixarFormulario" class="sm:w-1/3 bg-slate-100 hover:bg-slate-200 text-[#0B2C4D] border border-slate-300 font-semibold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Baixar Formulário
+          </button>
+
+          <button type="submit" class="sm:w-2/3 bg-[#0B2C4D] hover:bg-[#13406d] text-white font-semibold py-3 px-4 rounded-xl shadow-md transition flex items-center justify-center gap-2">
+            <span>Salvar Paciente e Enviar para Fila</span>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+            </svg>
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- 3º QUADRO: RETORNO DO MÉDICO / HISTÓRICO DA CLÍNICA -->
+    <div class="max-w-5xl mx-auto bg-white p-6 md:p-8 rounded-2xl shadow-md border border-slate-100">
+      <div class="flex flex-col md:flex-row md:justify-between md:items-center border-b border-slate-100 pb-4 mb-5 gap-3">
+        <div>
+          <h2 class="text-xs font-bold text-[#1EB5A6] uppercase tracking-wider">3. Retorno Médico & Histórico da Clínica</h2>
+          <h3 class="text-lg font-bold text-[#0B2C4D] mt-0.5">Orientações e Solicitações Pós-Consulta</h3>
+          <p class="text-xs text-slate-500">Clique no <strong>nome do paciente</strong> para abrir a ficha personalizada da sua clínica e imprimir</p>
+        </div>
+
+        <div class="w-full md:w-72">
+          <input type="text" id="buscaHistorico" placeholder="Buscar por paciente ou CPF..." class="w-full p-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#1EB5A6] outline-none">
+        </div>
+      </div>
+
+      <div id="listaRetornoMedico" class="space-y-3 max-h-96 overflow-y-auto pr-1">
+        <p class="text-sm text-slate-400 text-center py-6">Carregando histórico de atendimentos...</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: FICHA COMPLETA PERSONALIZADA COM LOGO E DADOS DA CLÍNICA -->
+  <div id="modalFichaPaciente" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div id="areaImpressaoFicha" class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto">
+      
+      <!-- Cabeçalho Personalizado da Clínica com Logo -->
+      <div class="bg-[#0B2C4D] text-white px-6 py-4 flex justify-between items-start gap-4">
+        <div class="flex items-center gap-3.5">
+          <img id="fichaClinicaLogo" src="" alt="Logo da Clínica" class="hidden h-14 w-14 object-contain rounded-xl bg-white p-1 shrink-0">
+          <div>
+            <h3 id="fichaClinicaNome" class="text-lg font-extrabold tracking-tight text-white">Nome da Clínica</h3>
+            <p id="fichaClinicaDetalhes" class="text-xs text-teal-200 mt-0.5">CNPJ • Telefone • Endereço</p>
+            <p id="fichaDataHoraAtendimento" class="text-[11px] text-slate-300 mt-1">Atendimento em --/--/---- às --:--</p>
+          </div>
+        </div>
+
+        <button type="button" onclick="fecharModalFicha()" class="no-print text-slate-300 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition" aria-label="Fechar">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Corpo da Ficha -->
+      <div class="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+        
+        <div>
+          <h4 class="text-xs font-bold text-[#1EB5A6] uppercase tracking-wider border-b border-slate-200 pb-1.5 mb-3">
+            Dados Cadastrais do Paciente
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            <div>
+              <span class="text-xs text-slate-400 block">Nome Completo</span>
+              <strong id="fichaPacNome" class="text-[#0B2C4D]">--</strong>
+            </div>
+            <div>
+              <span class="text-xs text-slate-400 block">CPF</span>
+              <strong id="fichaPacCpf" class="text-slate-700">--</strong>
+            </div>
+            <div>
+              <span class="text-xs text-slate-400 block">Data de Nascimento</span>
+              <span id="fichaPacNasc" class="text-slate-700 font-medium">--</span>
+            </div>
+            <div>
+              <span class="text-xs text-slate-400 block">Telefone / WhatsApp</span>
+              <span id="fichaPacTelefone" class="text-slate-700 font-medium">--</span>
+            </div>
+            <div>
+              <span class="text-xs text-slate-400 block">E-mail</span>
+              <span id="fichaPacEmail" class="text-slate-700 font-medium">--</span>
+            </div>
+            <div>
+              <span class="text-xs text-slate-400 block">Profissional & Modalidade</span>
+              <span id="fichaMedicoModalidade" class="text-slate-700 font-medium">--</span>
+            </div>
+            <div class="sm:col-span-2">
+              <span class="text-xs text-slate-400 block">Endereço Completo</span>
+              <span id="fichaPacEndereco" class="text-slate-700 font-medium">--</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold text-[#1EB5A6] uppercase tracking-wider border-b border-slate-200 pb-1.5 mb-2">
+            Prescrição & Conduta Clínica
+          </h4>
+          <div id="fichaPrescricao" class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm text-slate-800 whitespace-pre-line min-h-[60px]">
+            --
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold text-[#1EB5A6] uppercase tracking-wider border-b border-slate-200 pb-1.5 mb-2">
+            Orientações & Solicitações Pós-Consulta
+          </h4>
+          <div id="fichaRetornoRecepcao" class="bg-teal-50/60 border border-teal-200 rounded-xl p-3.5 text-sm text-[#0B2C4D] font-medium whitespace-pre-line min-h-[60px]">
+            --
+          </div>
+        </div>
+
+        <div class="hidden print:grid grid-cols-2 gap-8 pt-10 text-center text-xs text-slate-600">
+          <div class="border-t border-slate-400 pt-1">Assinatura / Carimbo Profissional</div>
+          <div id="fichaAssinaturaClinica" class="border-t border-slate-400 pt-1">Recepção</div>
+        </div>
+
+      </div>
+
+      <!-- Barra de Ações do Modal -->
+      <div class="no-print bg-slate-50 border-t border-slate-200 px-6 py-3.5 flex flex-col sm:flex-row justify-end gap-3">
+        <button type="button" onclick="fecharModalFicha()" class="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-sm font-semibold hover:bg-slate-100 transition">
+          Fechar
+        </button>
+
+        <button type="button" id="btnBaixarPdfFichaModal" class="px-4 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-[#0B2C4D] text-sm font-semibold transition flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          Baixar PDF
+        </button>
+
+        <button type="button" onclick="window.print()" class="px-5 py-2.5 rounded-xl bg-[#0B2C4D] hover:bg-[#13406d] text-white text-sm font-bold shadow-sm transition flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+          </svg>
+          Imprimir Ficha
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="text-center py-4 text-xs text-slate-400">
+    &copy; 2026 <strong class="text-[#0B2C4D]">Vitae</strong><strong class="text-[#1EB5A6]">Sys</strong> — Tecnologia que impulsiona a saúde
+  </footer>
+
+  <script type="module">
+    import { auth, db } from '../js/firebase-config.js';
+    import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { collection, addDoc, getDocs, getDoc, doc, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    let clinicaAtual = null;
+
+    // Máscaras de Formatação Automática (CPF e Telefone)
+    function formatarCPF(valor) {
+      const digitos = valor.replace(/\D/g, '').slice(0, 11);
+      return digitos
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    }
+
+    function formatarTelefone(valor) {
+      const digitos = valor.replace(/\D/g, '').slice(0, 11);
+      if (digitos.length <= 10) {
+        return digitos
+          .replace(/(\d{2})(\d)/, '($1) $2')
+          .replace(/(\d{4})(\d)/, '$1-$2');
+      }
+      return digitos
+        .replace(/(\d{2})(\d)/, '($1) $2')
+        .replace(/(\d{5})(\d)/, '$1-$2');
+    }
+
+    document.getElementById('cpf').addEventListener('input', (e) => {
+      e.target.value = formatarCPF(e.target.value);
+    });
+
+    document.getElementById('telefone').addEventListener('input', (e) => {
+      e.target.value = formatarTelefone(e.target.value);
+    });
+
+    async function inicializarContextoClinica(uid) {
+      let cId = sessionStorage.getItem('vitaesys_clinica_id');
+
+      if (!cId && uid) {
+        const userSnap = await getDoc(doc(db, "usuarios", uid));
+        if (userSnap.exists()) {
+          cId = userSnap.data().clinicaId;
+        }
+      }
+
+      if (!cId) {
+        window.location.href = '../index.html';
+        return;
+      }
+
+      const clinSnap = await getDoc(doc(db, "clinicas", cId));
+      if (clinSnap.exists()) {
+        clinicaAtual = { id: cId, ...clinSnap.data() };
+        sessionStorage.setItem('vitaesys_clinica_id', cId);
+        sessionStorage.setItem('vitaesys_clinica_dados', JSON.stringify(clinicaAtual));
+      } else {
+        window.location.href = '../index.html';
+        return;
+      }
+
+      document.getElementById('headerNomeClinica').textContent = clinicaAtual.nomeFantasia || "Clínica";
+      if (clinicaAtual.logoBase64) {
+        const hLogo = document.getElementById('headerLogoClinica');
+        hLogo.src = clinicaAtual.logoBase64;
+        hLogo.classList.remove('hidden');
+      }
+
+      const nomeUser = sessionStorage.getItem('vitaesys_usuario_nome');
+      if (nomeUser) {
+        document.getElementById('usuarioLogado').textContent = `Olá, ${nomeUser}`;
+      }
+
+      carregarMedicosDaClinica(clinicaAtual.id);
+      iniciarEscutaHistoricoClinica(clinicaAtual.id);
+    }
+
+    function preencherDataHoraInicial() {
+      const agora = new Date();
+      const ano = agora.getFullYear();
+      const mes = String(agora.getMonth() + 1).padStart(2, '0');
+      const dia = String(agora.getDate()).padStart(2, '0');
+      const hora = String(agora.getHours()).padStart(2, '0');
+      const minuto = String(agora.getMinutes()).padStart(2, '0');
+
+      document.getElementById('dataAtendimento').value = `${ano}-${mes}-${dia}`;
+      document.getElementById('horaAtendimento').value = `${hora}:${minuto}`;
+    }
+    preencherDataHoraInicial();
+
+    async function carregarMedicosDaClinica(clinicaId) {
+      const select = document.getElementById('medicoSelect');
+      try {
+        const q = query(
+          collection(db, "usuarios"),
+          where("clinicaId", "==", clinicaId),
+          where("cargo", "==", "medico")
+        );
+        const snapshot = await getDocs(q);
+        
+        select.innerHTML = '<option value="">Selecione um profissional</option>';
+        if (snapshot.empty) {
+          select.innerHTML = '<option value="">Nenhum profissional cadastrado nesta clínica</option>';
+          return;
+        }
+        snapshot.forEach(docItem => {
+          const option = document.createElement('option');
+          option.value = docItem.id;
+          option.textContent = docItem.data().nome;
+          option.dataset.nome = docItem.data().nome;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        console.error("Erro ao carregar médicos:", err);
+        select.innerHTML = '<option value="">Erro ao carregar profissionais</option>';
+      }
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      const uid = user ? user.uid : sessionStorage.getItem('vitaesys_uid');
+      if (!uid && !sessionStorage.getItem('vitaesys_clinica_id')) {
+        window.location.href = '../index.html';
+        return;
+      }
+      await inicializarContextoClinica(uid);
+    });
+
+    document.getElementById('btnSair').addEventListener('click', async () => {
+      sessionStorage.clear();
+      await signOut(auth);
+      window.location.href = '../index.html';
+    });
+
+    const selectTipo = document.getElementById('tipo');
+    const blocoConvenio = document.getElementById('blocoConvenio');
+    const blocoParticular = document.getElementById('blocoParticular');
+
+    const inputNomeConvenio = document.getElementById('nomeConvenio');
+    const inputCarteirinha = document.getElementById('numeroCarteirinha');
+    const selectPagamento = document.getElementById('formaPagamento');
+
+    selectTipo.addEventListener('change', () => {
+      const valor = selectTipo.value;
+      blocoConvenio.classList.add('hidden');
+      blocoParticular.classList.add('hidden');
+      inputNomeConvenio.required = false;
+      inputCarteirinha.required = false;
+      selectPagamento.required = false;
+
+      if (valor === 'Convênio') {
+        blocoConvenio.classList.remove('hidden');
+        inputNomeConvenio.required = true;
+        inputCarteirinha.required = true;
+      } else if (valor === 'Particular') {
+        blocoParticular.classList.remove('hidden');
+        selectPagamento.required = true;
+      }
+    });
+
+    function desenharCabecalhoPdfClinica(pdf, dataStr, horaStr) {
+      pdf.setFillColor(11, 44, 77);
+      pdf.rect(0, 0, 210, 34, 'F');
+
+      let xTexto = 14;
+      if (clinicaAtual?.logoBase64) {
+        try {
+          pdf.setFillColor(255, 255, 255);
+          pdf.roundedRect(14, 5, 24, 24, 2, 2, 'F');
+          pdf.addImage(clinicaAtual.logoBase64, 'PNG', 15.5, 6.5, 21, 21);
+          xTexto = 43;
+        } catch (err) {
+          console.error("Erro ao inserir logo no PDF:", err);
+        }
+      }
+
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(15);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(clinicaAtual?.nomeFantasia || "Clínica", xTexto, 14);
+      
+      pdf.setFontSize(8.5);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(`CNPJ: ${clinicaAtual?.cnpj || ''}  |  Tel: ${clinicaAtual?.telefone || ''}`, xTexto, 21);
+      pdf.text(`${clinicaAtual?.endereco || ''}`, xTexto, 27);
+
+      pdf.setFontSize(9.5);
+      pdf.text(`Data: ${dataStr}`, 162, 14);
+      pdf.text(`Hora: ${horaStr}`, 162, 20);
+    }
+
+    // Baixar Formulário de Solicitação em PDF
+    document.getElementById('btnBaixarFormulario').addEventListener('click', () => {
+      const nome = document.getElementById('nome').value.trim();
+      if (!nome) {
+        alert("Preencha pelo menos o Nome do Paciente antes de baixar o formulário.");
+        document.getElementById('nome').focus();
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF();
+
+      const dataNascRaw = document.getElementById('dataNascimento').value;
+      const dataNascFormatada = dataNascRaw ? dataNascRaw.split('-').reverse().join('/') : '____/____/________';
+      const cpf = document.getElementById('cpf').value || '_______________________';
+      const telefone = document.getElementById('telefone').value || '_______________________';
+      const email = document.getElementById('email').value || 'Não informado';
+      const endereco = document.getElementById('endereco').value || '___________________________________________________';
+      
+      const selectMedico = document.getElementById('medicoSelect');
+      const medicoNome = selectMedico.selectedIndex > 0 ? selectMedico.options[selectMedico.selectedIndex].textContent : '_______________________';
+      const tipo = document.getElementById('tipo').value || '_______________________';
+      
+      const dataAtendRaw = document.getElementById('dataAtendimento').value;
+      const dataAtend = dataAtendRaw ? dataAtendRaw.split('-').reverse().join('/') : '__/__/____';
+      const horaAtend = document.getElementById('horaAtendimento').value || '__:__';
+
+      desenharCabecalhoPdfClinica(pdf, dataAtend, horaAtend);
+
+      pdf.setTextColor(11, 44, 77);
+      pdf.setFontSize(12);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("1. IDENTIFICAÇÃO DO PACIENTE", 14, 46);
+      pdf.setDrawColor(30, 181, 166);
+      pdf.line(14, 48, 196, 48);
+
+      pdf.setTextColor(40, 40, 40);
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(`Nome Completo: ${nome}`, 14, 56);
+      pdf.text(`Data de Nascimento: ${dataNascFormatada}`, 14, 63);
+      pdf.text(`CPF: ${cpf}`, 110, 63);
+      pdf.text(`Telefone / WhatsApp: ${telefone}`, 14, 70);
+      pdf.text(`E-mail: ${email}`, 110, 70);
+      pdf.text(`Endereço: ${endereco}`, 14, 77);
+
+      pdf.setTextColor(11, 44, 77);
+      pdf.setFontSize(12);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("2. DADOS DO ATENDIMENTO", 14, 91);
+      pdf.line(14, 93, 196, 93);
+
+      pdf.setTextColor(40, 40, 40);
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(`Profissional Solicitado: ${medicoNome}`, 14, 101);
+      pdf.text(`Modalidade: ${tipo}`, 14, 108);
+
+      let yAtual = 115;
+
+      if (tipo === 'Convênio') {
+        const conv = document.getElementById('nomeConvenio').value || '_______________________';
+        const cart = document.getElementById('numeroCarteirinha').value || '_______________________';
+        pdf.text(`Convênio: ${conv}`, 14, yAtual);
+        pdf.text(`Nº da Carteirinha: ${cart}`, 110, yAtual);
+        yAtual += 10;
+      } else if (tipo === 'Particular') {
+        const pag = document.getElementById('formaPagamento').value || '_______________________';
+        const val = document.getElementById('valorConsulta').value ? `R$ ${document.getElementById('valorConsulta').value}` : 'A definir';
+        const sit = document.getElementById('statusPagamento').value;
+        pdf.text(`Forma de Pagamento: ${pag}`, 14, yAtual);
+        pdf.text(`Valor: ${val} (${sit})`, 110, yAtual);
+        yAtual += 10;
+      }
+
+      yAtual += 6;
+      pdf.setTextColor(11, 44, 77);
+      pdf.setFontSize(12);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("3. OBSERVAÇÕES / TRIAGEM INICIAL", 14, yAtual);
+      pdf.line(14, yAtual + 2, 196, yAtual + 2);
+
+      pdf.setDrawColor(200, 200, 200);
+      pdf.rect(14, yAtual + 6, 182, 35);
+
+      const yAssinatura = yAtual + 65;
+      pdf.setDrawColor(80, 80, 80);
+      pdf.line(20, yAssinatura, 95, yAssinatura);
+      pdf.line(115, yAssinatura, 190, yAssinatura);
+
+      pdf.setFontSize(9);
+      pdf.setTextColor(80, 80, 80);
+      pdf.text("Assinatura do Paciente / Responsável", 30, yAssinatura + 5);
+      pdf.text(`Recepção - ${clinicaAtual?.nomeFantasia || 'Clínica'}`, 125, yAssinatura + 5);
+
+      const nomeArquivo = nome.toLowerCase().replace(/\s+/g, '-');
+      pdf.save(`ficha-${nomeArquivo}.pdf`);
+    });
+
+    // Salvar Paciente e Atendimento
+    document.getElementById('formPaciente').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!clinicaAtual?.id) return;
+
+      const selectMedico = document.getElementById('medicoSelect');
+      const medicoId = selectMedico.value;
+      const medicoNome = selectMedico.options[selectMedico.selectedIndex]?.dataset?.nome || "";
+      const tipo = document.getElementById('tipo').value;
+
+      const dataAtendimento = document.getElementById('dataAtendimento').value;
+      const horaAtendimento = document.getElementById('horaAtendimento').value;
+      const mesAno = dataAtendimento.substring(0, 7);
+
+      let detalhesModalidade = {};
+      if (tipo === 'Convênio') {
+        detalhesModalidade = {
+          convenio: document.getElementById('nomeConvenio').value,
+          carteirinha: document.getElementById('numeroCarteirinha').value
+        };
+      } else if (tipo === 'Particular') {
+        detalhesModalidade = {
+          formaPagamento: document.getElementById('formaPagamento').value,
+          valorConsulta: document.getElementById('valorConsulta').value || "0,00",
+          statusPagamento: document.getElementById('statusPagamento').value
+        };
+      }
+
+      try {
+        const pacienteRef = await addDoc(collection(db, "pacientes"), {
+          clinicaId: clinicaAtual.id,
+          nome: document.getElementById('nome').value,
+          dataNascimento: document.getElementById('dataNascimento').value,
+          cpf: document.getElementById('cpf').value,
+          telefone: document.getElementById('telefone').value,
+          email: document.getElementById('email').value || "",
+          endereco: document.getElementById('endereco').value,
+          criadoEm: serverTimestamp()
+        });
+
+        await addDoc(collection(db, "atendimentos"), {
+          clinicaId: clinicaAtual.id,
+          pacienteId: pacienteRef.id,
+          pacienteNome: document.getElementById('nome').value,
+          pacienteNascimento: document.getElementById('dataNascimento').value,
+          pacienteCpf: document.getElementById('cpf').value,
+          pacienteTelefone: document.getElementById('telefone').value,
+          pacienteEmail: document.getElementById('email').value || "",
+          pacienteEndereco: document.getElementById('endereco').value,
+          tipo: tipo,
+          ...detalhesModalidade,
+          medicoId: medicoId,
+          medicoNome: medicoNome,
+          status: "aguardando",
+          dataAtendimento: dataAtendimento,
+          horaAtendimento: horaAtendimento,
+          mesAno: mesAno,
+          dataEntrada: serverTimestamp()
+        });
+
+        alert("Paciente cadastrado e enviado para a fila!");
+        e.target.reset();
+        blocoConvenio.classList.add('hidden');
+        blocoParticular.classList.add('hidden');
+        preencherDataHoraInicial();
+      } catch (error) {
+        alert("Erro ao salvar: " + error.message);
+      }
+    });
+
+    // 3º QUADRO: Histórico da Clínica
+    let historicoCompleto = [];
+    let fichaAtualSelecionada = null;
+
+    function renderizarHistorico(filtro = "") {
+      const container = document.getElementById('listaRetornoMedico');
+      const termo = filtro.toLowerCase().trim();
+      const termoNumeros = termo.replace(/\D/g, '');
+
+      const filtrados = historicoCompleto.filter(item => {
+        const nome = (item.pacienteNome || "").toLowerCase();
+        const cpf = (item.pacienteCpf || "").toLowerCase();
+        const cpfNumeros = cpf.replace(/\D/g, '');
+        return nome.includes(termo) || cpf.includes(termo) || (termoNumeros && cpfNumeros.includes(termoNumeros));
+      });
+
+      if (filtrados.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            <p class="text-sm text-slate-500">Nenhum retorno médico registrado nesta clínica ainda.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtrados.map(item => {
+        const dataFmt = item.dataAtendimento ? item.dataAtendimento.split('-').reverse().join('/') : '--/--/----';
+        const horaFmt = item.horaAtendimento || '--:--';
+        
+        const retornoTexto = item.retornoRecepcao || item.conduta || item.prescricao || item.observacoes || item.evolucao || "Consulta finalizada sem observações adicionais.";
+        const statusBadge = item.status === 'finalizado' 
+          ? '<span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-teal-100 text-[#0B2C4D]">Finalizado</span>'
+          : '<span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-amber-100 text-amber-800">Em Atendimento</span>';
+
+        return `
+          <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white transition">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-2">
+              <div class="flex flex-wrap items-center gap-2">
+                <button type="button" onclick="abrirFichaPaciente('${item.id}')" class="font-bold text-[#0B2C4D] hover:text-[#1EB5A6] underline decoration-[#1EB5A6]/60 underline-offset-4 text-base text-left transition flex items-center gap-1.5">
+                  <span>${item.pacienteNome}</span>
+                  <span class="text-[11px] font-semibold bg-white border border-slate-200 text-[#1EB5A6] px-2 py-0.5 rounded-md no-underline">Abrir Ficha</span>
+                </button>
+                <span class="text-xs text-slate-500">CPF: ${item.pacienteCpf || 'N/I'}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-500">${dataFmt} às ${horaFmt}</span>
+                ${statusBadge}
+              </div>
+            </div>
+
+            <p class="text-xs font-semibold text-[#1EB5A6] mb-2">
+              🩺 Atendido por: ${item.medicoNome || 'Profissional'} (${item.tipo || 'Consulta'})
+            </p>
+
+            <div class="bg-white p-3 rounded-lg border border-slate-200 text-sm text-slate-700 whitespace-pre-line">
+              <strong class="text-xs uppercase text-slate-400 block mb-1">Parecer / Solicitação do Profissional:</strong>
+              ${retornoTexto}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function iniciarEscutaHistoricoClinica(clinicaId) {
+      const qHistorico = query(collection(db, "atendimentos"), where("clinicaId", "==", clinicaId));
+      onSnapshot(qHistorico, (snapshot) => {
+        historicoCompleto = [];
+        snapshot.forEach(docSnap => {
+          const dados = docSnap.data();
+          if (dados.status === 'finalizado' || dados.retornoRecepcao || dados.conduta || dados.evolucao) {
+            historicoCompleto.push({ id: docSnap.id, ...dados });
+          }
+        });
+        historicoCompleto.sort((a, b) => (b.dataAtendimento + b.horaAtendimento).localeCompare(a.dataAtendimento + a.horaAtendimento));
+        renderizarHistorico(document.getElementById('buscaHistorico').value);
+      });
+    }
+
+    document.getElementById('buscaHistorico').addEventListener('input', (e) => {
+      renderizarHistorico(e.target.value);
+    });
+
+    // Abrir Modal com Ficha Personalizada + Logo
+    window.abrirFichaPaciente = async (atendimentoId) => {
+      const item = historicoCompleto.find(x => x.id === atendimentoId);
+      if (!item) return;
+
+      let telefone = item.pacienteTelefone || "";
+      let email = item.pacienteEmail || "";
+      let endereco = item.pacienteEndereco || "";
+      let dataNasc = item.pacienteNascimento || "";
+      let cpf = item.pacienteCpf || "";
+
+      if ((!telefone || !endereco) && item.pacienteId) {
+        try {
+          const pacSnap = await getDoc(doc(db, "pacientes", item.pacienteId));
+          if (pacSnap.exists()) {
+            const p = pacSnap.data();
+            telefone = telefone || p.telefone || "Não informado";
+            email = email || p.email || "Não informado";
+            endereco = endereco || p.endereco || "Não informado";
+            dataNasc = dataNasc || p.dataNascimento || "";
+            cpf = cpf || p.cpf || "Não informado";
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      const dataNascFmt = dataNasc ? dataNasc.split('-').reverse().join('/') : 'Não informado';
+      const dataAtendFmt = item.dataAtendimento ? item.dataAtendimento.split('-').reverse().join('/') : '--/--/----';
+      const horaAtendFmt = item.horaAtendimento || '--:--';
+
+      const prescricaoTexto = item.prescricao || "Nenhuma prescrição medicamentosa registrada neste atendimento.";
+      const orientacoesTexto = item.retornoRecepcao || item.conduta || item.observacoes || "Nenhuma orientação adicional registrada.";
+
+      fichaAtualSelecionada = {
+        nome: item.pacienteNome || "Não informado",
+        cpf: cpf ? formatarCPF(cpf) : "Não informado",
+        dataNascFmt,
+        telefone: telefone ? formatarTelefone(telefone) : "Não informado",
+        email: email || "Não informado",
+        endereco: endereco || "Não informado",
+        medicoNome: item.medicoNome || "Não informado",
+        tipo: item.tipo || "Consulta",
+        dataAtendFmt,
+        horaAtendFmt,
+        prescricaoTexto,
+        orientacoesTexto
+      };
+
+      const logoModal = document.getElementById('fichaClinicaLogo');
+      if (clinicaAtual?.logoBase64) {
+        logoModal.src = clinicaAtual.logoBase64;
+        logoModal.classList.remove('hidden');
+      } else {
+        logoModal.src = "";
+        logoModal.classList.add('hidden');
+      }
+
+      document.getElementById('fichaClinicaNome').textContent = clinicaAtual?.nomeFantasia || "Clínica";
+      document.getElementById('fichaClinicaDetalhes').textContent = `CNPJ: ${clinicaAtual?.cnpj || 'N/I'} • Tel: ${clinicaAtual?.telefone || 'N/I'} • ${clinicaAtual?.endereco || ''}`;
+      document.getElementById('fichaAssinaturaClinica').textContent = `Recepção - ${clinicaAtual?.nomeFantasia || 'Clínica'}`;
+
+      document.getElementById('fichaDataHoraAtendimento').textContent = `Atendimento em ${dataAtendFmt} às ${horaAtendFmt}`;
+      document.getElementById('fichaPacNome').textContent = fichaAtualSelecionada.nome;
+      document.getElementById('fichaPacCpf').textContent = fichaAtualSelecionada.cpf;
+      document.getElementById('fichaPacNasc').textContent = fichaAtualSelecionada.dataNascFmt;
+      document.getElementById('fichaPacTelefone').textContent = fichaAtualSelecionada.telefone;
+      document.getElementById('fichaPacEmail').textContent = fichaAtualSelecionada.email;
+      document.getElementById('fichaMedicoModalidade').textContent = `${fichaAtualSelecionada.medicoNome} (${fichaAtualSelecionada.tipo})`;
+      document.getElementById('fichaPacEndereco').textContent = fichaAtualSelecionada.endereco;
+
+      document.getElementById('fichaPrescricao').textContent = prescricaoTexto;
+      document.getElementById('fichaRetornoRecepcao').textContent = orientacoesTexto;
+
+      document.getElementById('modalFichaPaciente').classList.remove('hidden');
+    };
+
+    window.fecharModalFicha = () => {
+      document.getElementById('modalFichaPaciente').classList.add('hidden');
+    };
+
+    // Baixar PDF da Ficha Completa com Logo da Clínica
+    document.getElementById('btnBaixarPdfFichaModal').addEventListener('click', () => {
+      if (!fichaAtualSelecionada) return;
+      const f = fichaAtualSelecionada;
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF();
+
+      desenharCabecalhoPdfClinica(pdf, f.dataAtendFmt, f.horaAtendFmt);
+
+      // 1. Dados do Paciente
+      pdf.setTextColor(11, 44, 77);
+      pdf.setFontSize(12);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("1. DADOS CADASTRAIS DO PACIENTE", 14, 46);
+      pdf.setDrawColor(30, 181, 166);
+      pdf.line(14, 48, 196, 48);
+
+      pdf.setTextColor(40, 40, 40);
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(`Paciente: ${f.nome}`, 14, 56);
+      pdf.text(`CPF: ${f.cpf}`, 130, 56);
+      pdf.text(`Nascimento: ${f.dataNascFmt}`, 14, 63);
+      pdf.text(`Telefone: ${f.telefone}`, 130, 63);
+      pdf.text(`E-mail: ${f.email}`, 14, 70);
+      pdf.text(`Profissional / Modalidade: ${f.medicoNome} (${f.tipo})`, 14, 77);
+      
+      const linhasEndereco = pdf.splitTextToSize(`Endereço: ${f.endereco}`, 182);
+      pdf.text(linhasEndereco, 14, 84);
+
+      let y = 84 + (linhasEndereco.length * 6) + 6;
+
+      // 2. Prescrição
+      pdf.setTextColor(11, 44, 77);
+      pdf.setFontSize(12);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("2. PRESCRIÇÃO & CONDUTA CLÍNICA", 14, y);
+      pdf.line(14, y + 2, 196, y + 2);
+      y += 9;
+
+      pdf.setTextColor(40, 40, 40);
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      const linhasPrescricao = pdf.splitTextToSize(f.prescricaoTexto, 182);
+      pdf.text(linhasPrescricao, 14, y);
+      y += (linhasPrescricao.length * 5.5) + 10;
+
+      // 3. Orientações
+      pdf.setTextColor(11, 44, 77);
+      pdf.setFontSize(12);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("3. ORIENTAÇÕES & SOLICITAÇÕES PÓS-CONSULTA", 14, y);
+      pdf.line(14, y + 2, 196, y + 2);
+      y += 9;
+
+      pdf.setTextColor(40, 40, 40);
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      const linhasOrientacoes = pdf.splitTextToSize(f.orientacoesTexto, 182);
+      pdf.text(linhasOrientacoes, 14, y);
+      y += (linhasOrientacoes.length * 5.5) + 22;
+
+      if (y > 265) {
+        pdf.addPage();
+        y = 30;
+      }
+      pdf.setDrawColor(80, 80, 80);
+      pdf.line(20, y, 95, y);
+      pdf.line(115, y, 190, y);
+
+      pdf.setFontSize(9);
+      pdf.setTextColor(80, 80, 80);
+      pdf.text("Assinatura / Carimbo Profissional", 33, y + 5);
+      pdf.text(`Recepção - ${clinicaAtual?.nomeFantasia || 'Clínica'}`, 125, y + 5);
+
+      const nomeArq = f.nome.toLowerCase().replace(/\s+/g, '-');
+      pdf.save(`ficha-${nomeArq}.pdf`);
+    });
+  </script>
+</body>
+</html>
