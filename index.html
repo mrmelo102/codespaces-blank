@@ -133,6 +133,13 @@
               <option value="admin">Administração</option>
             </select>
           </div>
+
+          <!-- CAMPO EXCLUSIVO DO MÉDICO / PROFISSIONAL: Nº REGISTRO CONSELHO (SIGLA + Nº) -->
+          <div id="blocoRegistroConselho" class="hidden pt-1">
+            <label class="block text-xs font-bold text-[#0B2C4D] uppercase">Nº Registro Conselho (Sigla + Nº) *</label>
+            <input type="text" id="cadRegistroConselho" placeholder="Ex: CRM-AM 12345 ou CRO-AM 6789" class="mt-1 w-full p-2.5 border border-slate-300 bg-white rounded-lg uppercase focus:ring-2 focus:ring-[#1EB5A6] outline-none text-sm font-semibold">
+            <p class="text-[11px] text-slate-500 mt-1">Será exibido no receituário médico e no seu painel.</p>
+          </div>
         </div>
 
         <!-- BLOCO B: CRIAR NOVA CLÍNICA (DONO / GESTOR) -->
@@ -251,6 +258,23 @@
       }
     }
 
+    // Controla exibição do campo Nº Registro Conselho conforme cargo e modo de cadastro
+    function atualizarCampoConselho() {
+      const cargo = document.getElementById('cadCargoEquipe').value;
+      const blocoConselho = document.getElementById('blocoRegistroConselho');
+      const inputConselho = document.getElementById('cadRegistroConselho');
+
+      if (modoCadastro === 'equipe' && cargo === 'medico') {
+        blocoConselho.classList.remove('hidden');
+        inputConselho.required = true;
+      } else {
+        blocoConselho.classList.add('hidden');
+        inputConselho.required = false;
+      }
+    }
+
+    document.getElementById('cadCargoEquipe').addEventListener('change', atualizarCampoConselho);
+
     window.alternarTela = (tela) => {
       document.getElementById('feedbackBox').classList.add('hidden');
       document.getElementById('loginForm').classList.add('hidden');
@@ -308,6 +332,8 @@
         document.getElementById('clinicaTelefone').required = true;
         document.getElementById('clinicaEndereco').required = true;
       }
+
+      atualizarCampoConselho();
     };
 
     // Carrega dados da clínica e salva sessão completa antes de redirecionar
@@ -333,6 +359,11 @@
       sessionStorage.setItem('vitaesys_cargo', userData.cargo);
       sessionStorage.setItem('vitaesys_usuario_nome', userData.nome);
       sessionStorage.setItem('vitaesys_clinica_id', userData.clinicaId);
+      if (userData.registroConselho) {
+        sessionStorage.setItem('vitaesys_registro_conselho', userData.registroConselho);
+      } else {
+        sessionStorage.removeItem('vitaesys_registro_conselho');
+      }
       sessionStorage.setItem('vitaesys_clinica_dados', JSON.stringify({
         id: userData.clinicaId,
         ...clinicaData
@@ -416,6 +447,9 @@
           // Cadastro de Equipe vinculada a uma clínica existente pelo Código
           const codigoDigitado = document.getElementById('cadCodigoClinica').value.trim().toUpperCase();
           cargoFinal = document.getElementById('cadCargoEquipe').value;
+          const registroConselho = cargoFinal === 'medico'
+            ? document.getElementById('cadRegistroConselho').value.trim().toUpperCase()
+            : "";
 
           const qClinica = query(collection(db, "clinicas"), where("codigoAcesso", "==", codigoDigitado));
           const snapClinica = await getDocs(qClinica);
@@ -433,6 +467,10 @@
             cargo: cargoFinal,
             clinicaId: clinicaId
           };
+
+          if (cargoFinal === 'medico' && registroConselho) {
+            userData.registroConselho = registroConselho;
+          }
 
           await setDoc(doc(db, "usuarios", cred.user.uid), userData);
           mostrarMensagem("Conta vinculada com sucesso! Entrando...", "sucesso");

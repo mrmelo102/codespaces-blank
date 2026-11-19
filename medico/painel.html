@@ -53,12 +53,13 @@
             <input type="file" id="inputFotoMedico" accept="image/png, image/jpeg, image/webp" class="hidden">
           </div>
 
-          <!-- Título, Nome do Médico, Badge Acesso Restrito e Subtítulo -->
+          <!-- Título, Nome do Médico, Registro Conselho, Badge Acesso Restrito e Subtítulo -->
           <div>
-            <div class="flex flex-wrap items-center gap-2.5">
+            <div class="flex flex-wrap items-center gap-2">
               <h1 class="text-lg md:text-xl font-extrabold text-slate-900 tracking-tight">
                 Ambiente Exclusivo do Médico <span class="text-slate-300 font-normal mx-0.5">•</span> <span id="tituloNomeMedico" class="text-[#0B2C4D]">Dr(a). ---</span>
               </h1>
+              <span id="badgeRegistroConselho" class="hidden px-2.5 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-[#0B2C4D] text-xs font-bold"></span>
               <span class="px-2.5 py-0.5 rounded-md bg-emerald-100/80 text-emerald-800 text-xs font-bold">
                 Acesso Restrito
               </span>
@@ -187,6 +188,7 @@
     let clinicaAtual = null;
     let medicoUid = null;
     let medicoNome = "";
+    let medicoRegistroConselho = "";
     let filaAtendimentos = [];
     let atendimentoSelecionado = null;
     let horaInicioConsulta = null;
@@ -314,6 +316,7 @@
 
       let clinicaId = sessionStorage.getItem('vitaesys_clinica_id');
       medicoNome = sessionStorage.getItem('vitaesys_usuario_nome') || "";
+      medicoRegistroConselho = sessionStorage.getItem('vitaesys_registro_conselho') || "";
       let fotoMedico = "";
 
       const uSnap = await getDoc(doc(db, "usuarios", medicoUid));
@@ -321,9 +324,13 @@
         const uData = uSnap.data();
         clinicaId = uData.clinicaId || clinicaId;
         medicoNome = uData.nome || medicoNome;
+        medicoRegistroConselho = uData.registroConselho || medicoRegistroConselho;
         fotoMedico = uData.fotoBase64 || "";
         sessionStorage.setItem('vitaesys_clinica_id', clinicaId);
         sessionStorage.setItem('vitaesys_usuario_nome', medicoNome);
+        if (medicoRegistroConselho) {
+          sessionStorage.setItem('vitaesys_registro_conselho', medicoRegistroConselho);
+        }
       }
 
       if (!clinicaId) {
@@ -331,8 +338,17 @@
         return;
       }
 
-      document.getElementById('medicoLogado').textContent = `🩺 ${medicoNome}`;
+      document.getElementById('medicoLogado').textContent = medicoRegistroConselho
+        ? `🩺 ${medicoNome} (${medicoRegistroConselho})`
+        : `🩺 ${medicoNome}`;
       document.getElementById('tituloNomeMedico').textContent = medicoNome;
+
+      if (medicoRegistroConselho) {
+        const badgeConselho = document.getElementById('badgeRegistroConselho');
+        badgeConselho.textContent = medicoRegistroConselho;
+        badgeConselho.classList.remove('hidden');
+      }
+
       atualizarAvatarMedico(fotoMedico, medicoNome);
 
       const cSnap = await getDoc(doc(db, "clinicas", clinicaId));
@@ -477,7 +493,6 @@
       }
     });
 
-    // Helper para desenhar quadros padronizados no PDF (Identificação, Prescrição Médica e Recomendações)
     function desenharQuadroSecaoPDF(pdf, tituloSecao, linhasTexto, yInicial, alturaMinima = 28) {
       const alturaCabecalho = 7.5;
       const paddingVertical = 5;
@@ -485,37 +500,30 @@
       const alturaConteudo = Math.max(alturaMinima - alturaCabecalho, (linhasTexto.length * lineHeight) + paddingVertical);
       const alturaTotal = alturaCabecalho + alturaConteudo;
 
-      // Quebra de página automática caso o quadro não caiba antes da área de assinatura
       if (yInicial + alturaTotal > 235) {
         pdf.addPage();
         yInicial = 18;
       }
 
-      // Fundo e borda arredondada do quadro (mesmo padrão do quadro do paciente)
       pdf.setFillColor(248, 250, 252);
       pdf.setDrawColor(226, 232, 240);
       pdf.roundedRect(14, yInicial, 182, alturaTotal, 2, 2, 'FD');
 
-      // Faixa superior sutil do título do quadro
       pdf.setFillColor(241, 245, 249);
       pdf.roundedRect(14, yInicial, 182, alturaCabecalho, 2, 2, 'F');
       pdf.rect(14, yInicial + alturaCabecalho - 2, 182, 2, 'F');
 
-      // Detalhe lateral verde-água VitaeSys no título
       pdf.setFillColor(30, 181, 166);
       pdf.rect(14, yInicial, 2.2, alturaCabecalho, 'F');
 
-      // Linha divisória abaixo do título
       pdf.setDrawColor(226, 232, 240);
       pdf.line(14, yInicial + alturaCabecalho, 196, yInicial + alturaCabecalho);
 
-      // Texto do título do quadro
       pdf.setTextColor(11, 44, 77);
       pdf.setFontSize(9.5);
       pdf.setFont("helvetica", "bold");
       pdf.text(tituloSecao.toUpperCase(), 19, yInicial + 5.2);
 
-      // Texto do conteúdo dentro do quadro
       pdf.setTextColor(30, 41, 59);
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
@@ -524,8 +532,6 @@
       return yInicial + alturaTotal;
     }
 
-    // Baixar Receita Médica em PDF com Quadros Padronizados:
-    // 1) Dados do Paciente | 2) Prescrição Médica | 3) Recomendações
     document.getElementById('btnImprimirReceita').addEventListener('click', () => {
       if (!atendimentoSelecionado) return;
       const prescricao = document.getElementById('campoPrescricao').value.trim();
@@ -594,7 +600,6 @@
       pdf.setDrawColor(226, 232, 240);
       pdf.roundedRect(14, 52, 182, alturaBoxPaciente, 2, 2, 'FD');
 
-      // Cabeçalho do Quadro 1
       pdf.setFillColor(241, 245, 249);
       pdf.roundedRect(14, 52, 182, 7.5, 2, 2, 'F');
       pdf.rect(14, 57.5, 182, 2, 'F');
@@ -639,7 +644,7 @@
       const linhasRecomendacoes = pdf.splitTextToSize(textoRecomendacoesFinal, 174);
       cursorY = desenharQuadroSecaoPDF(pdf, "Recomendações & Orientações", linhasRecomendacoes, cursorY, 34) + 6;
 
-      // Data de emissão e assinatura do médico no rodapé
+      // Data de emissão e assinatura do médico com Registro do Conselho
       const dataHojeBR = new Date().toLocaleDateString('pt-BR');
       pdf.setFontSize(9);
       pdf.setFont("helvetica", "normal");
@@ -651,11 +656,22 @@
       pdf.setTextColor(15, 23, 42);
       pdf.setFontSize(9.5);
       pdf.setFont("helvetica", "bold");
-      pdf.text(`${medicoNome}`, 105, 264, { align: "center" });
-      pdf.setFontSize(8.5);
-      pdf.setFont("helvetica", "normal");
-      pdf.setTextColor(110, 110, 110);
-      pdf.text(`${clinicaAtual?.nomeFantasia || 'Clínica'}`, 105, 269, { align: "center" });
+      pdf.text(`${medicoNome}`, 105, 263.5, { align: "center" });
+
+      if (medicoRegistroConselho) {
+        pdf.setFontSize(8.5);
+        pdf.setFont("helvetica", "bold");
+        pdf.setTextColor(11, 44, 77);
+        pdf.text(`${medicoRegistroConselho}`, 105, 268.2, { align: "center" });
+        pdf.setFont("helvetica", "normal");
+        pdf.setTextColor(110, 110, 110);
+        pdf.text(`${clinicaAtual?.nomeFantasia || 'Clínica'}`, 105, 272.8, { align: "center" });
+      } else {
+        pdf.setFontSize(8.5);
+        pdf.setFont("helvetica", "normal");
+        pdf.setTextColor(110, 110, 110);
+        pdf.text(`${clinicaAtual?.nomeFantasia || 'Clínica'}`, 105, 268.5, { align: "center" });
+      }
 
       const nomeArq = nomePac.toLowerCase().replace(/\s+/g, '-');
       pdf.save(`receita-${nomeArq}.pdf`);
