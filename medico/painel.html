@@ -33,17 +33,16 @@
   <main class="flex-grow p-4 md:p-6">
     <div class="max-w-6xl mx-auto space-y-6">
 
-      <!-- FAIXA DE IDENTIFICAÇÃO DO MÉDICO (MODELO SOLICITADO) -->
+      <!-- FAIXA DE IDENTIFICAÇÃO DO MÉDICO -->
       <div class="bg-white px-6 py-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-4">
           
-          <!-- Avatar Circular (Foto ou Iniciais "DR" + clique para alterar foto) -->
+          <!-- Avatar Circular -->
           <div class="relative group shrink-0">
             <label for="inputFotoMedico" title="Clique para adicionar ou alterar sua foto" class="cursor-pointer w-14 h-14 rounded-full bg-[#0F172A] flex items-center justify-center overflow-hidden border-2 border-slate-200 shadow-sm relative block">
               <img id="imgFotoMedico" src="" alt="Foto do Médico" class="hidden w-full h-full object-cover">
               <span id="iniciaisFotoMedico" class="text-lg font-extrabold text-[#2DD4BF] tracking-wide select-none">DR</span>
 
-              <!-- Overlay discreto ao passar o mouse -->
               <div class="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
@@ -71,7 +70,6 @@
 
         </div>
 
-        <!-- Botão discreto para gerenciar foto de perfil -->
         <div class="flex items-center gap-2 self-start sm:self-center">
           <label for="inputFotoMedico" class="cursor-pointer px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-lg text-xs font-semibold transition">
             Alterar Foto
@@ -103,7 +101,7 @@
         <!-- COLUNA DIREITA: ÁREA DE ATENDIMENTO / PRONTUÁRIO -->
         <div class="lg:col-span-2 bg-white p-6 md:p-7 rounded-2xl shadow-md border border-slate-100">
           
-          <!-- Estado Inicial (Nenhum paciente selecionado) -->
+          <!-- Estado Inicial -->
           <div id="estadoVazioAtendimento" class="text-center py-16 space-y-3">
             <div class="w-14 h-14 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center text-2xl">🩺</div>
             <h3 class="text-lg font-bold text-[#0B2C4D]">Nenhum paciente em atendimento</h3>
@@ -116,16 +114,19 @@
           <div id="areaAtendimentoAtivo" class="hidden space-y-6">
             
             <!-- Cabeçalho do Paciente em Atendimento -->
-            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-              <div>
-                <span class="text-[11px] font-bold uppercase tracking-wider text-[#1EB5A6] block">Paciente em Atendimento</span>
-                <h2 id="atendNomePaciente" class="text-xl font-extrabold text-[#0B2C4D]">Nome do Paciente</h2>
-                <p id="atendDetalhesPaciente" class="text-xs text-slate-500 mt-0.5">CPF • Nascimento • Modalidade</p>
-              </div>
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+              <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                <div>
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-[#1EB5A6] block">Paciente em Atendimento</span>
+                  <h2 id="atendNomePaciente" class="text-xl font-extrabold text-[#0B2C4D]">Nome do Paciente</h2>
+                  <p id="atendDetalhesPaciente" class="text-xs text-slate-600 mt-0.5">CPF • Nascimento • Modalidade</p>
+                  <p id="atendEnderecoConvenio" class="text-xs text-slate-500 mt-0.5"></p>
+                </div>
 
-              <div class="text-left sm:text-right">
-                <span class="text-[11px] text-slate-400 block">Entrada na Recepção</span>
-                <strong id="atendHoraEntrada" class="text-sm font-bold text-[#0B2C4D]">--:--</strong>
+                <div class="text-left sm:text-right shrink-0">
+                  <span class="text-[11px] text-slate-400 block">Entrada na Recepção</span>
+                  <strong id="atendHoraEntrada" class="text-sm font-bold text-[#0B2C4D]">--:--</strong>
+                </div>
               </div>
             </div>
 
@@ -195,6 +196,38 @@
       return `${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}`;
     }
 
+    function formatarDataBR(dataStr) {
+      if (!dataStr) return "Não informado";
+      if (dataStr.includes('-')) {
+        const partes = dataStr.split('-');
+        if (partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
+      }
+      return dataStr;
+    }
+
+    // Extrai os detalhes do convênio independentemente do nome do campo salvo pela recepção
+    function obterTextoModalidadeEConvenio(item) {
+      const tipo = item.tipo || "Não informado";
+      if (tipo !== "Convênio") {
+        return {
+          modalidade: tipo,
+          detalheConvenio: ""
+        };
+      }
+
+      const nomeConv = item.convenioNome || item.nomeConvenio || item.convenio || item.operadora || "";
+      const numCarteira = item.convenioNumero || item.numeroCarteirinha || item.carteirinha || item.numeroConvenio || "";
+
+      const partes = [];
+      if (nomeConv) partes.push(nomeConv);
+      if (numCarteira) partes.push(`Carteirinha/Plano: ${numCarteira}`);
+
+      return {
+        modalidade: "Convênio",
+        detalheConvenio: partes.length > 0 ? partes.join(" • ") : "Dados do convênio não informados no cadastro"
+      };
+    }
+
     function gerarIniciaisMedico(nome) {
       if (!nome) return "DR";
       const limpo = nome.replace(/^dr[a]?\.?\s+/i, '').trim();
@@ -224,7 +257,6 @@
       }
     }
 
-    // Upload e salvamento da foto do médico no Firestore
     document.getElementById('inputFotoMedico').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file || !medicoUid) return;
@@ -239,7 +271,6 @@
           canvas.height = size;
           const ctx = canvas.getContext('2d');
 
-          // Recorte centralizado quadrado para avatar circular
           const minSide = Math.min(img.width, img.height);
           const sx = (img.width - minSide) / 2;
           const sy = (img.height - minSide) / 2;
@@ -403,9 +434,13 @@
       document.getElementById('estadoVazioAtendimento').classList.add('hidden');
       document.getElementById('areaAtendimentoAtivo').classList.remove('hidden');
 
-      const dataNascFmt = item.pacienteNascimento ? item.pacienteNascimento.split('-').reverse().join('/') : 'N/I';
+      const dataNascFmt = formatarDataBR(item.pacienteNascimento || item.dataNascimento);
+      const infoConv = obterTextoModalidadeEConvenio(item);
+      const enderecoPac = item.pacienteEndereco || item.endereco || "Não informado";
+
       document.getElementById('atendNomePaciente').textContent = item.pacienteNome;
-      document.getElementById('atendDetalhesPaciente').textContent = `CPF: ${item.pacienteCpf || 'N/I'} • Nasc.: ${dataNascFmt} • ${item.tipo || 'Consulta'}`;
+      document.getElementById('atendDetalhesPaciente').textContent = `CPF: ${item.pacienteCpf || 'N/I'} • Nasc.: ${dataNascFmt} • ${infoConv.modalidade}${infoConv.detalheConvenio ? ` (${infoConv.detalheConvenio})` : ''}`;
+      document.getElementById('atendEnderecoConvenio').textContent = `Endereço: ${enderecoPac}`;
       document.getElementById('atendHoraEntrada').textContent = `${item.horaAtendimento || '--:--'} (Chamado às ${horaInicioConsulta})`;
 
       document.getElementById('campoEvolucao').value = item.evolucao || "";
@@ -443,6 +478,7 @@
       }
     });
 
+    // Baixar Receita Médica em PDF com Dados Completos do Paciente (Nome, Nasc., CPF, Endereço, Modalidade/Convênio)
     document.getElementById('btnImprimirReceita').addEventListener('click', () => {
       if (!atendimentoSelecionado) return;
       const prescricao = document.getElementById('campoPrescricao').value.trim();
@@ -455,6 +491,7 @@
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF();
 
+      // Cabeçalho da Clínica
       pdf.setFillColor(11, 44, 77);
       pdf.rect(0, 0, 210, 34, 'F');
 
@@ -480,31 +517,81 @@
       pdf.text(`CNPJ: ${clinicaAtual?.cnpj || ''}  |  Tel: ${clinicaAtual?.telefone || ''}`, xTexto, 21);
       pdf.text(`${clinicaAtual?.endereco || ''}`, xTexto, 27);
 
+      // Título do Documento
       pdf.setTextColor(11, 44, 77);
       pdf.setFontSize(13);
       pdf.setFont("helvetica", "bold");
-      pdf.text("RECEITUÁRIO MÉDICO", 14, 47);
+      pdf.text("RECEITUÁRIO MÉDICO", 14, 46);
       pdf.setDrawColor(30, 181, 166);
-      pdf.line(14, 49, 196, 49);
+      pdf.line(14, 48.5, 196, 48.5);
 
-      pdf.setTextColor(40, 40, 40);
-      pdf.setFontSize(10);
+      // Preparação dos dados cadastrais completos do paciente
+      const nomePac = atendimentoSelecionado.pacienteNome || "Não informado";
+      const cpfPac = atendimentoSelecionado.pacienteCpf || "Não informado";
+      const nascPac = formatarDataBR(atendimentoSelecionado.pacienteNascimento || atendimentoSelecionado.dataNascimento);
+      const endPac = atendimentoSelecionado.pacienteEndereco || atendimentoSelecionado.endereco || "Não informado";
+      const infoConv = obterTextoModalidadeEConvenio(atendimentoSelecionado);
+
+      const textoModalidade = infoConv.modalidade === "Convênio"
+        ? `Convênio (${infoConv.detalheConvenio})`
+        : infoConv.modalidade;
+
+      const linhasEndereco = pdf.splitTextToSize(`Endereço: ${endPac}`, 176);
+      const linhasModalidade = pdf.splitTextToSize(`Atendimento: ${textoModalidade}`, 176);
+
+      const alturaBoxPaciente = 20 + (linhasEndereco.length * 4.5) + (linhasModalidade.length * 4.5);
+
+      // Quadro de Identificação do Paciente
+      pdf.setFillColor(248, 250, 252);
+      pdf.setDrawColor(226, 232, 240);
+      pdf.roundedRect(14, 52, 182, alturaBoxPaciente, 2, 2, 'FD');
+
+      let yAtual = 58.5;
+      pdf.setTextColor(15, 23, 42);
+      pdf.setFontSize(9.5);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(`Paciente: ${nomePac}`, 18, yAtual);
+
+      yAtual += 5.5;
       pdf.setFont("helvetica", "normal");
-      pdf.text(`Paciente: ${atendimentoSelecionado.pacienteNome}`, 14, 58);
-      pdf.text(`CPF: ${atendimentoSelecionado.pacienteCpf || 'N/I'}`, 140, 58);
+      pdf.setTextColor(51, 65, 85);
+      pdf.text(`Data de Nascimento: ${nascPac}`, 18, yAtual);
+      pdf.text(`CPF: ${cpfPac}`, 115, yAtual);
 
+      yAtual += 5.5;
+      pdf.text(linhasEndereco, 18, yAtual);
+      yAtual += (linhasEndereco.length * 4.5) + 1;
+
+      pdf.setFont("helvetica", "bold");
+      pdf.setTextColor(11, 44, 77);
+      pdf.text(linhasModalidade, 18, yAtual);
+
+      // Corpo da Prescrição Médica
+      const yInicioPrescricao = 52 + alturaBoxPaciente + 10;
+      pdf.setTextColor(30, 41, 59);
+      pdf.setFontSize(10.5);
+      pdf.setFont("helvetica", "normal");
       const linhasPrescricao = pdf.splitTextToSize(prescricao, 182);
-      pdf.text(linhasPrescricao, 14, 72);
+      pdf.text(linhasPrescricao, 14, yInicioPrescricao);
+
+      // Data de emissão e assinatura do médico
+      const dataHojeBR = new Date().toLocaleDateString('pt-BR');
+      pdf.setFontSize(9);
+      pdf.setTextColor(100, 116, 139);
+      pdf.text(`Emitido em: ${dataHojeBR}`, 14, 242);
 
       pdf.setDrawColor(80, 80, 80);
-      pdf.line(55, 250, 155, 250);
+      pdf.line(55, 256, 155, 256);
+      pdf.setTextColor(15, 23, 42);
       pdf.setFontSize(9.5);
-      pdf.text(`${medicoNome}`, 105, 256, { align: "center" });
+      pdf.setFont("helvetica", "bold");
+      pdf.text(`${medicoNome}`, 105, 262, { align: "center" });
       pdf.setFontSize(8.5);
+      pdf.setFont("helvetica", "normal");
       pdf.setTextColor(110, 110, 110);
-      pdf.text(`${clinicaAtual?.nomeFantasia || 'Clínica'}`, 105, 261, { align: "center" });
+      pdf.text(`${clinicaAtual?.nomeFantasia || 'Clínica'}`, 105, 267, { align: "center" });
 
-      const nomeArq = atendimentoSelecionado.pacienteNome.toLowerCase().replace(/\s+/g, '-');
+      const nomeArq = nomePac.toLowerCase().replace(/\s+/g, '-');
       pdf.save(`receita-${nomeArq}.pdf`);
     });
 
