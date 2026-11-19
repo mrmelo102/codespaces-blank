@@ -143,8 +143,8 @@
               </div>
 
               <div>
-                <label class="block text-sm font-bold text-[#0B2C4D] mb-1">Orientações & Solicitações para a Recepção (Exames / Retorno)</label>
-                <textarea id="campoRetornoRecepcao" rows="3" placeholder="Ex: Agendar retorno em 15 dias, solicitar hemograma completo, emitir guia..." class="w-full p-3 border border-slate-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#1EB5A6]"></textarea>
+                <label class="block text-sm font-bold text-[#0B2C4D] mb-1">Recomendações & Orientações (Exames / Retorno / Cuidados)</label>
+                <textarea id="campoRetornoRecepcao" rows="3" placeholder="Ex: Repouso por 3 dias, hidratação oral, agendar retorno em 15 dias, realizar hemograma completo..." class="w-full p-3 border border-slate-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#1EB5A6]"></textarea>
               </div>
 
               <!-- Botões de Ação -->
@@ -205,7 +205,6 @@
       return dataStr;
     }
 
-    // Extrai os detalhes do convênio independentemente do nome do campo salvo pela recepção
     function obterTextoModalidadeEConvenio(item) {
       const tipo = item.tipo || "Não informado";
       if (tipo !== "Convênio") {
@@ -478,12 +477,62 @@
       }
     });
 
-    // Baixar Receita Médica em PDF com Dados Completos do Paciente (Nome, Nasc., CPF, Endereço, Modalidade/Convênio)
+    // Helper para desenhar quadros padronizados no PDF (Identificação, Prescrição Médica e Recomendações)
+    function desenharQuadroSecaoPDF(pdf, tituloSecao, linhasTexto, yInicial, alturaMinima = 28) {
+      const alturaCabecalho = 7.5;
+      const paddingVertical = 5;
+      const lineHeight = 5;
+      const alturaConteudo = Math.max(alturaMinima - alturaCabecalho, (linhasTexto.length * lineHeight) + paddingVertical);
+      const alturaTotal = alturaCabecalho + alturaConteudo;
+
+      // Quebra de página automática caso o quadro não caiba antes da área de assinatura
+      if (yInicial + alturaTotal > 235) {
+        pdf.addPage();
+        yInicial = 18;
+      }
+
+      // Fundo e borda arredondada do quadro (mesmo padrão do quadro do paciente)
+      pdf.setFillColor(248, 250, 252);
+      pdf.setDrawColor(226, 232, 240);
+      pdf.roundedRect(14, yInicial, 182, alturaTotal, 2, 2, 'FD');
+
+      // Faixa superior sutil do título do quadro
+      pdf.setFillColor(241, 245, 249);
+      pdf.roundedRect(14, yInicial, 182, alturaCabecalho, 2, 2, 'F');
+      pdf.rect(14, yInicial + alturaCabecalho - 2, 182, 2, 'F');
+
+      // Detalhe lateral verde-água VitaeSys no título
+      pdf.setFillColor(30, 181, 166);
+      pdf.rect(14, yInicial, 2.2, alturaCabecalho, 'F');
+
+      // Linha divisória abaixo do título
+      pdf.setDrawColor(226, 232, 240);
+      pdf.line(14, yInicial + alturaCabecalho, 196, yInicial + alturaCabecalho);
+
+      // Texto do título do quadro
+      pdf.setTextColor(11, 44, 77);
+      pdf.setFontSize(9.5);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(tituloSecao.toUpperCase(), 19, yInicial + 5.2);
+
+      // Texto do conteúdo dentro do quadro
+      pdf.setTextColor(30, 41, 59);
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(linhasTexto, 18, yInicial + alturaCabecalho + 5.5);
+
+      return yInicial + alturaTotal;
+    }
+
+    // Baixar Receita Médica em PDF com Quadros Padronizados:
+    // 1) Dados do Paciente | 2) Prescrição Médica | 3) Recomendações
     document.getElementById('btnImprimirReceita').addEventListener('click', () => {
       if (!atendimentoSelecionado) return;
       const prescricao = document.getElementById('campoPrescricao').value.trim();
-      if (!prescricao) {
-        alert("Preencha o campo de Prescrição Medicamentosa antes de baixar a receita.");
+      const recomendacoes = document.getElementById('campoRetornoRecepcao').value.trim();
+
+      if (!prescricao && !recomendacoes) {
+        alert("Preencha a Prescrição Medicamentosa ou as Recomendações antes de baixar a receita.");
         document.getElementById('campoPrescricao').focus();
         return;
       }
@@ -491,7 +540,7 @@
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF();
 
-      // Cabeçalho da Clínica
+      // Cabeçalho Institucional da Clínica
       pdf.setFillColor(11, 44, 77);
       pdf.rect(0, 0, 210, 34, 'F');
 
@@ -517,7 +566,7 @@
       pdf.text(`CNPJ: ${clinicaAtual?.cnpj || ''}  |  Tel: ${clinicaAtual?.telefone || ''}`, xTexto, 21);
       pdf.text(`${clinicaAtual?.endereco || ''}`, xTexto, 27);
 
-      // Título do Documento
+      // Título Principal do Documento
       pdf.setTextColor(11, 44, 77);
       pdf.setFontSize(13);
       pdf.setFont("helvetica", "bold");
@@ -525,7 +574,7 @@
       pdf.setDrawColor(30, 181, 166);
       pdf.line(14, 48.5, 196, 48.5);
 
-      // Preparação dos dados cadastrais completos do paciente
+      // --- QUADRO 1: DADOS DO PACIENTE ---
       const nomePac = atendimentoSelecionado.pacienteNome || "Não informado";
       const cpfPac = atendimentoSelecionado.pacienteCpf || "Não informado";
       const nascPac = formatarDataBR(atendimentoSelecionado.pacienteNascimento || atendimentoSelecionado.dataNascimento);
@@ -536,17 +585,29 @@
         ? `Convênio (${infoConv.detalheConvenio})`
         : infoConv.modalidade;
 
-      const linhasEndereco = pdf.splitTextToSize(`Endereço: ${endPac}`, 176);
-      const linhasModalidade = pdf.splitTextToSize(`Atendimento: ${textoModalidade}`, 176);
+      const linhasEndereco = pdf.splitTextToSize(`Endereço: ${endPac}`, 174);
+      const linhasModalidade = pdf.splitTextToSize(`Atendimento: ${textoModalidade}`, 174);
 
-      const alturaBoxPaciente = 20 + (linhasEndereco.length * 4.5) + (linhasModalidade.length * 4.5);
+      const alturaBoxPaciente = 26 + (linhasEndereco.length * 4.5) + (linhasModalidade.length * 4.5);
 
-      // Quadro de Identificação do Paciente
       pdf.setFillColor(248, 250, 252);
       pdf.setDrawColor(226, 232, 240);
       pdf.roundedRect(14, 52, 182, alturaBoxPaciente, 2, 2, 'FD');
 
-      let yAtual = 58.5;
+      // Cabeçalho do Quadro 1
+      pdf.setFillColor(241, 245, 249);
+      pdf.roundedRect(14, 52, 182, 7.5, 2, 2, 'F');
+      pdf.rect(14, 57.5, 182, 2, 'F');
+      pdf.setFillColor(30, 181, 166);
+      pdf.rect(14, 52, 2.2, 7.5, 'F');
+      pdf.line(14, 59.5, 196, 59.5);
+
+      pdf.setTextColor(11, 44, 77);
+      pdf.setFontSize(9.5);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("IDENTIFICAÇÃO DO PACIENTE", 19, 57.2);
+
+      let yAtual = 65;
       pdf.setTextColor(15, 23, 42);
       pdf.setFontSize(9.5);
       pdf.setFont("helvetica", "bold");
@@ -566,30 +627,35 @@
       pdf.setTextColor(11, 44, 77);
       pdf.text(linhasModalidade, 18, yAtual);
 
-      // Corpo da Prescrição Médica
-      const yInicioPrescricao = 52 + alturaBoxPaciente + 10;
-      pdf.setTextColor(30, 41, 59);
-      pdf.setFontSize(10.5);
-      pdf.setFont("helvetica", "normal");
-      const linhasPrescricao = pdf.splitTextToSize(prescricao, 182);
-      pdf.text(linhasPrescricao, 14, yInicioPrescricao);
+      let cursorY = 52 + alturaBoxPaciente + 6;
 
-      // Data de emissão e assinatura do médico
+      // --- QUADRO 2: PRESCRIÇÃO MÉDICA ---
+      const textoPrescricaoFinal = prescricao || "Nenhuma medicação prescrita nesta consulta.";
+      const linhasPrescricao = pdf.splitTextToSize(textoPrescricaoFinal, 174);
+      cursorY = desenharQuadroSecaoPDF(pdf, "Prescrição Médica", linhasPrescricao, cursorY, 48) + 6;
+
+      // --- QUADRO 3: RECOMENDAÇÕES ---
+      const textoRecomendacoesFinal = recomendacoes || "Seguir orientações médicas e retornar em caso de persistência dos sintomas.";
+      const linhasRecomendacoes = pdf.splitTextToSize(textoRecomendacoesFinal, 174);
+      cursorY = desenharQuadroSecaoPDF(pdf, "Recomendações & Orientações", linhasRecomendacoes, cursorY, 34) + 6;
+
+      // Data de emissão e assinatura do médico no rodapé
       const dataHojeBR = new Date().toLocaleDateString('pt-BR');
       pdf.setFontSize(9);
+      pdf.setFont("helvetica", "normal");
       pdf.setTextColor(100, 116, 139);
-      pdf.text(`Emitido em: ${dataHojeBR}`, 14, 242);
+      pdf.text(`Emitido em: ${dataHojeBR}`, 14, 245);
 
       pdf.setDrawColor(80, 80, 80);
-      pdf.line(55, 256, 155, 256);
+      pdf.line(55, 258, 155, 258);
       pdf.setTextColor(15, 23, 42);
       pdf.setFontSize(9.5);
       pdf.setFont("helvetica", "bold");
-      pdf.text(`${medicoNome}`, 105, 262, { align: "center" });
+      pdf.text(`${medicoNome}`, 105, 264, { align: "center" });
       pdf.setFontSize(8.5);
       pdf.setFont("helvetica", "normal");
       pdf.setTextColor(110, 110, 110);
-      pdf.text(`${clinicaAtual?.nomeFantasia || 'Clínica'}`, 105, 267, { align: "center" });
+      pdf.text(`${clinicaAtual?.nomeFantasia || 'Clínica'}`, 105, 269, { align: "center" });
 
       const nomeArq = nomePac.toLowerCase().replace(/\s+/g, '-');
       pdf.save(`receita-${nomeArq}.pdf`);
