@@ -53,13 +53,21 @@
             <input type="file" id="inputFotoMedico" accept="image/png, image/jpeg, image/webp" class="hidden">
           </div>
 
-          <!-- Título, Nome do Médico, Registro Conselho, Badge Acesso Restrito e Subtítulo -->
+          <!-- Título, Nome do Médico, Registro Conselho, Lápis de Edição e Badge -->
           <div>
             <div class="flex flex-wrap items-center gap-2">
               <h1 class="text-lg md:text-xl font-extrabold text-slate-900 tracking-tight">
                 Ambiente Exclusivo do Médico <span class="text-slate-300 font-normal mx-0.5">•</span> <span id="tituloNomeMedico" class="text-[#0B2C4D]">Dr(a). ---</span>
               </h1>
               <span id="badgeRegistroConselho" class="hidden px-2.5 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-[#0B2C4D] text-xs font-bold"></span>
+              
+              <!-- Botão Lápis para Editar Cadastro do Médico -->
+              <button type="button" id="btnAbrirEditarMedico" title="Editar informações do cadastro (Nome e Nº Registro Conselho)" class="p-1.5 rounded-lg text-slate-400 hover:text-[#0B2C4D] hover:bg-slate-100 border border-transparent hover:border-slate-200 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                </svg>
+              </button>
+
               <span class="px-2.5 py-0.5 rounded-md bg-emerald-100/80 text-emerald-800 text-xs font-bold">
                 Acesso Restrito
               </span>
@@ -176,6 +184,45 @@
     </div>
   </main>
 
+  <!-- MODAL PARA EDITAR CADASTRO DO MÉDICO -->
+  <div id="modalEditarMedico" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+        <div>
+          <h3 class="text-base font-extrabold text-[#0B2C4D]">Editar Dados do Profissional</h3>
+          <p class="text-xs text-slate-500">Atualize seu nome e registro no conselho de classe</p>
+        </div>
+        <button type="button" id="btnFecharModalMedico" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <form id="formEditarDadosMedico" class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-[#0B2C4D] uppercase mb-1">Nome Completo / Profissional *</label>
+          <input type="text" id="editMedicoNome" required placeholder="Ex: Dr. Melo" class="w-full p-2.5 border border-slate-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#1EB5A6]">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-[#0B2C4D] uppercase mb-1">Nº Registro Conselho (Sigla + Nº)</label>
+          <input type="text" id="editMedicoConselho" placeholder="Ex: CRM-AM 12345 ou CRO-AM 6789" class="w-full p-2.5 border border-slate-300 rounded-xl text-sm uppercase font-semibold outline-none focus:ring-2 focus:ring-[#1EB5A6]">
+          <p class="text-[11px] text-slate-400 mt-1">Este número sairá automaticamente na assinatura do receituário PDF.</p>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" id="btnCancelarModalMedico" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">
+            Cancelar
+          </button>
+          <button type="submit" id="btnSalvarDadosMedico" class="px-5 py-2.5 bg-[#0B2C4D] hover:bg-[#13406d] text-white text-xs font-bold rounded-xl shadow-sm transition">
+            Salvar Alterações
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <footer class="text-center py-4 text-xs text-slate-400">
     &copy; 2026 <strong class="text-[#0B2C4D]">Vitae</strong><strong class="text-[#1EB5A6]">Sys</strong> — Tecnologia que impulsiona a saúde
   </footer>
@@ -189,6 +236,7 @@
     let medicoUid = null;
     let medicoNome = "";
     let medicoRegistroConselho = "";
+    let medicoFotoBase64 = "";
     let filaAtendimentos = [];
     let atendimentoSelecionado = null;
     let horaInicioConsulta = null;
@@ -239,6 +287,7 @@
     }
 
     function atualizarAvatarMedico(fotoBase64, nome) {
+      medicoFotoBase64 = fotoBase64 || "";
       const img = document.getElementById('imgFotoMedico');
       const iniciais = document.getElementById('iniciaisFotoMedico');
       const btnRemover = document.getElementById('btnRemoverFotoMedico');
@@ -257,6 +306,81 @@
         btnRemover.classList.add('hidden');
       }
     }
+
+    function atualizarIdentidadeMedicoNaTela() {
+      document.getElementById('medicoLogado').textContent = medicoRegistroConselho
+        ? `🩺 ${medicoNome} (${medicoRegistroConselho})`
+        : `🩺 ${medicoNome}`;
+      document.getElementById('tituloNomeMedico').textContent = medicoNome;
+
+      const badgeConselho = document.getElementById('badgeRegistroConselho');
+      if (medicoRegistroConselho) {
+        badgeConselho.textContent = medicoRegistroConselho;
+        badgeConselho.classList.remove('hidden');
+      } else {
+        badgeConselho.textContent = "";
+        badgeConselho.classList.add('hidden');
+      }
+
+      atualizarAvatarMedico(medicoFotoBase64, medicoNome);
+    }
+
+    // Controle do Modal de Edição de Dados do Médico (Lápis)
+    const modalEditarMedico = document.getElementById('modalEditarMedico');
+
+    document.getElementById('btnAbrirEditarMedico').addEventListener('click', () => {
+      document.getElementById('editMedicoNome').value = medicoNome;
+      document.getElementById('editMedicoConselho').value = medicoRegistroConselho;
+      modalEditarMedico.classList.remove('hidden');
+    });
+
+    function fecharModalEditarMedico() {
+      modalEditarMedico.classList.add('hidden');
+    }
+
+    document.getElementById('btnFecharModalMedico').addEventListener('click', fecharModalEditarMedico);
+    document.getElementById('btnCancelarModalMedico').addEventListener('click', fecharModalEditarMedico);
+
+    modalEditarMedico.addEventListener('click', (e) => {
+      if (e.target === modalEditarMedico) fecharModalEditarMedico();
+    });
+
+    document.getElementById('formEditarDadosMedico').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!medicoUid) return;
+
+      const btnSalvar = document.getElementById('btnSalvarDadosMedico');
+      btnSalvar.disabled = true;
+      btnSalvar.textContent = "Salvando...";
+
+      const novoNome = document.getElementById('editMedicoNome').value.trim();
+      const novoConselho = document.getElementById('editMedicoConselho').value.trim().toUpperCase();
+
+      try {
+        await updateDoc(doc(db, "usuarios", medicoUid), {
+          nome: novoNome,
+          registroConselho: novoConselho
+        });
+
+        medicoNome = novoNome;
+        medicoRegistroConselho = novoConselho;
+
+        sessionStorage.setItem('vitaesys_usuario_nome', medicoNome);
+        if (medicoRegistroConselho) {
+          sessionStorage.setItem('vitaesys_registro_conselho', medicoRegistroConselho);
+        } else {
+          sessionStorage.removeItem('vitaesys_registro_conselho');
+        }
+
+        atualizarIdentidadeMedicoNaTela();
+        fecharModalEditarMedico();
+      } catch (err) {
+        alert("Erro ao atualizar dados do médico: " + err.message);
+      } finally {
+        btnSalvar.disabled = false;
+        btnSalvar.textContent = "Salvar Alterações";
+      }
+    });
 
     document.getElementById('inputFotoMedico').addEventListener('change', (e) => {
       const file = e.target.files[0];
@@ -317,7 +441,6 @@
       let clinicaId = sessionStorage.getItem('vitaesys_clinica_id');
       medicoNome = sessionStorage.getItem('vitaesys_usuario_nome') || "";
       medicoRegistroConselho = sessionStorage.getItem('vitaesys_registro_conselho') || "";
-      let fotoMedico = "";
 
       const uSnap = await getDoc(doc(db, "usuarios", medicoUid));
       if (uSnap.exists()) {
@@ -325,7 +448,7 @@
         clinicaId = uData.clinicaId || clinicaId;
         medicoNome = uData.nome || medicoNome;
         medicoRegistroConselho = uData.registroConselho || medicoRegistroConselho;
-        fotoMedico = uData.fotoBase64 || "";
+        medicoFotoBase64 = uData.fotoBase64 || "";
         sessionStorage.setItem('vitaesys_clinica_id', clinicaId);
         sessionStorage.setItem('vitaesys_usuario_nome', medicoNome);
         if (medicoRegistroConselho) {
@@ -338,18 +461,7 @@
         return;
       }
 
-      document.getElementById('medicoLogado').textContent = medicoRegistroConselho
-        ? `🩺 ${medicoNome} (${medicoRegistroConselho})`
-        : `🩺 ${medicoNome}`;
-      document.getElementById('tituloNomeMedico').textContent = medicoNome;
-
-      if (medicoRegistroConselho) {
-        const badgeConselho = document.getElementById('badgeRegistroConselho');
-        badgeConselho.textContent = medicoRegistroConselho;
-        badgeConselho.classList.remove('hidden');
-      }
-
-      atualizarAvatarMedico(fotoMedico, medicoNome);
+      atualizarIdentidadeMedicoNaTela();
 
       const cSnap = await getDoc(doc(db, "clinicas", clinicaId));
       if (cSnap.exists()) {
