@@ -22,13 +22,19 @@
     <div class="flex items-center gap-4">
       <img id="tvLogoClinica" src="" alt="Logo Clínica" class="hidden h-14 w-14 object-contain rounded-xl bg-white p-1 shadow">
       <div>
-        <h1 id="tvNomeClinica" class="text-2xl md:text-3xl font-extrabold tracking-tight text-white">Painel de Atendimento</h1>
+        <div class="flex items-center gap-3">
+          <h1 id="tvNomeClinica" class="text-2xl md:text-3xl font-extrabold tracking-tight text-white">Painel de Atendimento</h1>
+          <span id="statusConexaoTV" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 text-[11px] font-bold">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Ao Vivo
+          </span>
+        </div>
         <p class="text-xs text-teal-300 font-semibold uppercase tracking-widest mt-0.5">Acompanhe sua chamada no painel</p>
       </div>
     </div>
 
     <div class="flex items-center gap-6">
-      <!-- Botão para ativar/testar áudio (navegadores exigem 1 clique para liberar som) -->
+      <!-- Botão para ativar/testar áudio -->
       <button id="btnAtivarAudio" type="button" class="px-4 py-2.5 rounded-xl bg-[#1EB5A6] hover:bg-[#17998c] text-[#071D34] font-extrabold text-xs md:text-sm shadow transition flex items-center gap-2">
         <span id="iconeAudio">🔇</span>
         <span id="textoAudio">Ativar Som & Voz</span>
@@ -107,7 +113,14 @@
     let ultimaChaveChamada = null;
     let primeiraCarga = true;
 
-    // Relógio ao vivo
+    function obterDataLocalISO() {
+      const agora = new Date();
+      const ano = agora.getFullYear();
+      const mes = String(agora.getMonth() + 1).padStart(2, '0');
+      const dia = String(agora.getDate()).padStart(2, '0');
+      return `${ano}-${mes}-${dia}`;
+    }
+
     function atualizarRelogio() {
       const agora = new Date();
       document.getElementById('tvRelogio').textContent = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -116,7 +129,6 @@
     atualizarRelogio();
     setInterval(atualizarRelogio, 1000);
 
-    // Campainha sonora (Ding-Dong) usando Web Audio API nativa
     function tocarCampainha() {
       if (!audioLiberado) return;
       try {
@@ -144,7 +156,6 @@
       }
     }
 
-    // Fala o nome do paciente em voz alta
     function anunciarPorVoz(paciente, sala, medico) {
       if (!audioLiberado || !('speechSynthesis' in window)) return;
       try {
@@ -183,6 +194,17 @@
       if (item.chamadoEm && typeof item.chamadoEm.toMillis === 'function') {
         return item.chamadoEm.toMillis();
       }
+      if (typeof item.chamadoEmMs === 'number') {
+        return item.chamadoEmMs;
+      }
+      if (item.horaAtendimentoMedico) {
+        const [h, m] = item.horaAtendimentoMedico.split(':').map(Number);
+        if (!isNaN(h) && !isNaN(m)) {
+          const d = new Date();
+          d.setHours(h, m, 0, 0);
+          return d.getTime();
+        }
+      }
       return 0;
     }
 
@@ -205,7 +227,6 @@
         return;
       }
 
-      // Carrega nome e logotipo da clínica
       const cSnap = await getDoc(doc(db, "clinicas", clinicaId));
       if (cSnap.exists()) {
         const cData = cSnap.data();
@@ -217,81 +238,88 @@
         }
       }
 
-      // Escuta atendimentos da clínica em tempo real
       const qAtend = query(collection(db, "atendimentos"), where("clinicaId", "==", clinicaId));
-      onSnapshot(qAtend, (snapshot) => {
-        const hojeISO = new Date().toISOString().split('T')[0];
-        const chamados = [];
 
-        snapshot.forEach(docSnap => {
-          const d = docSnap.data();
-          const isHoje = !d.dataAtendimento || d.dataAtendimento === hojeISO;
-          const foiChamado = (d.status === 'em_atendimento' || d.status === 'finalizado') && obterTimestampChamada(d) > 0;
+      onSnapshot(
+        qAtend,
+        { includeMetadataChanges: true },
+        (snapshot) => {
+          const hojeLocal = obterDataLocalISO();
+          const chamados = [];
 
-          if (isHoje && foiChamado) {
-            chamados.push({ id: docSnap.id, ...d });
+          snapshot.forEach(docSnap => {
+            const d = docSnap.data();
+            const isHoje = !d.dataAtendimento || d.dataAtendimento === hojeLocal;
+            const statusChamado = d.status === 'em_atendimento' || d.status === 'finalizado';
+            const ts = obterTimestampChamada(d);
+
+            if (isHoje && statusChamado && ts > 0) {
+              chamados.push({ id: docSnap.id, _ts: ts, ...d });
+            }
+          });
+
+          chamados.sort((a, b) => b._ts - a._ts);
+
+          if (chamados.length === 0) {
+            document.getElementById('tvPacienteAtual').textContent = "Aguardando Chamada...";
+            document.getElementById('tvSalaAtual').textContent = "Consultório";
+            document.getElementById('tvMedicoAtual').textContent = "---";
+            document.getElementById('tvHoraChamada').textContent = "--:--";
+            primeiraCarga = false;
+            return;
           }
-        });
 
-        // Ordena do mais recente chamado para o mais antigo
-        chamados.sort((a, b) => obterTimestampChamada(b) - obterTimestampChamada(a));
+          const atual = chamados[0];
+          const chaveAtual = `${atual.id}_${atual._ts}`;
 
-        if (chamados.length === 0) {
-          document.getElementById('tvPacienteAtual').textContent = "Aguardando Chamada...";
-          document.getElementById('tvSalaAtual').textContent = "Consultório";
-          document.getElementById('tvMedicoAtual').textContent = "---";
-          document.getElementById('tvHoraChamada').textContent = "--:--";
+          document.getElementById('tvPacienteAtual').textContent = atual.pacienteNome || "Paciente";
+          document.getElementById('tvSalaAtual').textContent = atual.consultorioNome || "Consultório";
+          document.getElementById('tvMedicoAtual').textContent = atual.medicoNome || "Médico(a)";
+          document.getElementById('tvHoraChamada').textContent = atual.horaAtendimentoMedico || "--:--";
+
+          if (!primeiraCarga && chaveAtual !== ultimaChaveChamada) {
+            const card = document.getElementById('cardChamadaPrincipal');
+            card.classList.remove('animar-chamada');
+            void card.offsetWidth;
+            card.classList.add('animar-chamada');
+
+            tocarCampainha();
+            anunciarPorVoz(atual.pacienteNome, atual.consultorioNome, atual.medicoNome);
+          }
+
+          ultimaChaveChamada = chaveAtual;
           primeiraCarga = false;
-          return;
-        }
 
-        const atual = chamados[0];
-        const tsAtual = obterTimestampChamada(atual);
-        const chaveAtual = `${atual.id}_${tsAtual}`;
+          const anteriores = chamados.slice(1, 5);
+          const listaEl = document.getElementById('listaUltimasChamadas');
 
-        document.getElementById('tvPacienteAtual').textContent = atual.pacienteNome || "Paciente";
-        document.getElementById('tvSalaAtual').textContent = atual.consultorioNome || "Consultório";
-        document.getElementById('tvMedicoAtual').textContent = atual.medicoNome || "Médico(a)";
-        document.getElementById('tvHoraChamada').textContent = atual.horaAtendimentoMedico || "--:--";
-
-        // Se houve uma nova chamada (ou o médico clicou em "Chamar Novamente na TV")
-        if (!primeiraCarga && chaveAtual !== ultimaChaveChamada) {
-          const card = document.getElementById('cardChamadaPrincipal');
-          card.classList.remove('animar-chamada');
-          void card.offsetWidth;
-          card.classList.add('animar-chamada');
-
-          tocarCampainha();
-          anunciarPorVoz(atual.pacienteNome, atual.consultorioNome, atual.medicoNome);
-        }
-
-        ultimaChaveChamada = chaveAtual;
-        primeiraCarga = false;
-
-        // Renderiza últimas chamadas (posições 1 a 4)
-        const anteriores = chamados.slice(1, 5);
-        const listaEl = document.getElementById('listaUltimasChamadas');
-
-        if (anteriores.length === 0) {
-          listaEl.innerHTML = `
-            <div class="p-4 rounded-2xl bg-[#071D34]/60 border border-slate-800 text-center text-slate-400 text-sm">
-              Nenhuma chamada anterior hoje.
-            </div>
-          `;
-        } else {
-          listaEl.innerHTML = anteriores.map(item => `
-            <div class="p-4 rounded-2xl bg-[#071D34]/80 border border-slate-700/70 flex justify-between items-center gap-3">
-              <div class="min-w-0">
-                <p class="font-extrabold text-base md:text-lg text-white truncate">${item.pacienteNome || 'Paciente'}</p>
-                <p class="text-xs text-teal-300 font-semibold truncate">${item.consultorioNome || 'Consultório'} • ${item.medicoNome || ''}</p>
+          if (anteriores.length === 0) {
+            listaEl.innerHTML = `
+              <div class="p-4 rounded-2xl bg-[#071D34]/60 border border-slate-800 text-center text-slate-400 text-sm">
+                Nenhuma chamada anterior hoje.
               </div>
-              <span class="text-sm font-bold text-slate-300 bg-slate-800 px-2.5 py-1 rounded-lg shrink-0">
-                ${item.horaAtendimentoMedico || '--:--'}
-              </span>
-            </div>
-          `).join('');
+            `;
+          } else {
+            listaEl.innerHTML = anteriores.map(item => `
+              <div class="p-4 rounded-2xl bg-[#071D34]/80 border border-slate-700/70 flex justify-between items-center gap-3">
+                <div class="min-w-0">
+                  <p class="font-extrabold text-base md:text-lg text-white truncate">${item.pacienteNome || 'Paciente'}</p>
+                  <p class="text-xs text-teal-300 font-semibold truncate">${item.consultorioNome || 'Consultório'} • ${item.medicoNome || ''}</p>
+                </div>
+                <span class="text-sm font-bold text-slate-300 bg-slate-800 px-2.5 py-1 rounded-lg shrink-0">
+                  ${item.horaAtendimentoMedico || '--:--'}
+                </span>
+              </div>
+            `).join('');
+          }
+        },
+        (error) => {
+          console.error("Erro na sincronização em tempo real da TV:", error);
+          const badge = document.getElementById('statusConexaoTV');
+          badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/20 border border-red-400/50 text-red-200 text-[11px] font-bold";
+          badge.innerHTML = `⚠️ Erro de permissão no Firestore`;
         }
-      });
+      );
     }
 
     inicializarTV();
