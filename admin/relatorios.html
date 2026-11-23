@@ -35,7 +35,7 @@
 
           <div id="dropdownMenuGestor" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-40">
             <div class="px-4 py-1.5 border-b border-slate-100">
-              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cadastros & Configurações</p>
+              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cadastros & Painel TV</p>
             </div>
 
             <button type="button" id="btnAbrirCadastroConvenio" class="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-teal-50 hover:text-[#0B2C4D] flex items-center gap-3 transition">
@@ -48,6 +48,22 @@
                 <span class="font-bold text-[#0B2C4D] block leading-tight">Cadastro de Convênios</span>
                 <span class="text-[11px] text-slate-400">Operadoras médicas & registros</span>
               </div>
+            </button>
+
+            <div class="border-t border-slate-100 my-1"></div>
+
+            <button type="button" id="btnAbrirPainelTV" class="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-teal-50 hover:text-[#0B2C4D] flex items-center gap-3 transition">
+              <span class="w-8 h-8 rounded-lg bg-sky-50 text-[#0B2C4D] flex items-center justify-center shrink-0">
+                📺
+              </span>
+              <div>
+                <span class="font-bold text-[#0B2C4D] block leading-tight">Abrir Painel TV</span>
+                <span class="text-[11px] text-slate-400">Tela de chamadas da recepção</span>
+              </div>
+            </button>
+
+            <button type="button" id="btnCopiarLinkTV" class="w-full text-left px-4 py-2 text-xs font-semibold text-[#1EB5A6] hover:bg-slate-50 flex items-center gap-2 transition">
+              <span>🔗</span> Copiar Link Exclusivo da TV
             </button>
           </div>
         </div>
@@ -378,6 +394,27 @@
       if (!containerMenuGestor.contains(e.target)) {
         dropdownMenuGestor.classList.add('hidden');
       }
+    });
+
+    // --- LINK DO PAINEL TV (SALA DE ESPERA) ---
+    function obterUrlPainelTV() {
+      if (!clinicaAtual?.id) return "";
+      const baseUrl = window.location.href.replace(/\/admin\/relatorios\.html.*$/, '');
+      return `${baseUrl}/tv.html?clinica=${encodeURIComponent(clinicaAtual.id)}`;
+    }
+
+    document.getElementById('btnAbrirPainelTV').addEventListener('click', () => {
+      dropdownMenuGestor.classList.add('hidden');
+      const url = obterUrlPainelTV();
+      if (url) window.open(url, '_blank');
+    });
+
+    document.getElementById('btnCopiarLinkTV').addEventListener('click', () => {
+      dropdownMenuGestor.classList.add('hidden');
+      const url = obterUrlPainelTV();
+      if (!url) return;
+      navigator.clipboard.writeText(url);
+      alert(`Link do Painel TV copiado!\n\n${url}\n\nAbra este link no navegador da TV da sala de espera.`);
     });
 
     // --- MODAL DE CADASTRO DE CONVÊNIOS ---

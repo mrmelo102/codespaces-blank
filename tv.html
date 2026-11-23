@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel de Chamadas - VitaeSys TV</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes pulsoChamada {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(30, 181, 166, 0.55); }
+      50% { transform: scale(1.015); box-shadow: 0 0 0 18px rgba(30, 181, 166, 0); }
+    }
+    .animar-chamada {
+      animation: pulsoChamada 1.6s ease-in-out 3;
+    }
+  </style>
+</head>
+<body class="bg-[#071D34] text-white min-h-screen flex flex-col justify-between overflow-hidden select-none">
+
+  <!-- Cabeçalho Institucional -->
+  <header class="bg-[#0B2C4D] border-b border-slate-700/70 px-8 py-4 flex justify-between items-center shadow-lg">
+    <div class="flex items-center gap-4">
+      <img id="tvLogoClinica" src="" alt="Logo Clínica" class="hidden h-14 w-14 object-contain rounded-xl bg-white p-1 shadow">
+      <div>
+        <h1 id="tvNomeClinica" class="text-2xl md:text-3xl font-extrabold tracking-tight text-white">Painel de Atendimento</h1>
+        <p class="text-xs text-teal-300 font-semibold uppercase tracking-widest mt-0.5">Acompanhe sua chamada no painel</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-6">
+      <!-- Botão para ativar/testar áudio (navegadores exigem 1 clique para liberar som) -->
+      <button id="btnAtivarAudio" type="button" class="px-4 py-2.5 rounded-xl bg-[#1EB5A6] hover:bg-[#17998c] text-[#071D34] font-extrabold text-xs md:text-sm shadow transition flex items-center gap-2">
+        <span id="iconeAudio">🔇</span>
+        <span id="textoAudio">Ativar Som & Voz</span>
+      </button>
+
+      <!-- Relógio ao Vivo -->
+      <div class="text-right border-l border-slate-700 pl-6">
+        <div id="tvRelogio" class="text-3xl md:text-4xl font-extrabold text-white tabular-nums leading-none">--:--</div>
+        <div id="tvData" class="text-xs text-slate-300 font-medium mt-1 capitalize">--</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Área Principal: Chamada Atual (Esquerda) + Últimas Chamadas (Direita) -->
+  <main class="flex-grow grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 md:p-8">
+
+    <!-- COLUNA ESQUERDA: PACIENTE CHAMADO AGORA -->
+    <section id="cardChamadaPrincipal" class="lg:col-span-8 bg-gradient-to-br from-[#0B2C4D] to-[#0F3A63] border-2 border-[#1EB5A6]/60 rounded-3xl p-8 md:p-12 flex flex-col justify-between shadow-2xl relative overflow-hidden">
+      <div class="flex items-center justify-between">
+        <span class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#1EB5A6]/20 border border-[#1EB5A6] text-[#2DD4BF] text-sm md:text-base font-extrabold uppercase tracking-wider">
+          <span class="w-3 h-3 rounded-full bg-[#2DD4BF] animate-ping"></span>
+          Chamada Atual
+        </span>
+        <span id="tvHoraChamada" class="text-lg md:text-xl font-bold text-slate-300">--:--</span>
+      </div>
+
+      <!-- Nome do Paciente em Destaque Gigante -->
+      <div class="my-auto py-8 text-center">
+        <p class="text-sm md:text-lg uppercase tracking-[0.25em] text-teal-300/90 font-bold mb-3">Paciente</p>
+        <h2 id="tvPacienteAtual" class="text-4xl sm:text-6xl md:text-7xl font-black text-white tracking-tight leading-tight break-words">
+          Aguardando Chamada...
+        </h2>
+      </div>
+
+      <!-- Destino: Consultório / Profissional -->
+      <div class="bg-[#071D34]/80 border border-slate-700/80 rounded-2xl p-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="text-center sm:text-left">
+          <span class="text-xs uppercase tracking-widest text-slate-400 font-bold block">Dirija-se ao</span>
+          <strong id="tvSalaAtual" class="text-2xl md:text-4xl font-extrabold text-[#2DD4BF]">Consultório</strong>
+        </div>
+
+        <div class="text-center sm:text-right">
+          <span class="text-xs uppercase tracking-widest text-slate-400 font-bold block">Profissional</span>
+          <strong id="tvMedicoAtual" class="text-xl md:text-2xl font-bold text-white">---</strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- COLUNA DIREITA: HISTÓRICO DE ÚLTIMAS CHAMADAS -->
+    <aside class="lg:col-span-4 bg-[#0B2C4D]/90 border border-slate-700/70 rounded-3xl p-6 flex flex-col justify-between shadow-xl">
+      <div>
+        <div class="border-b border-slate-700 pb-4 mb-4 flex items-center justify-between">
+          <h3 class="text-lg font-extrabold uppercase tracking-wider text-teal-300">Últimas Chamadas</h3>
+          <span class="text-xs text-slate-400">Hoje</span>
+        </div>
+
+        <div id="listaUltimasChamadas" class="space-y-3.5">
+          <div class="p-4 rounded-2xl bg-[#071D34]/60 border border-slate-800 text-center text-slate-400 text-sm">
+            Nenhuma chamada registrada hoje.
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-4 border-t border-slate-700/60 text-center text-xs text-slate-400">
+        Powered by <strong class="text-white">Vitae</strong><strong class="text-[#1EB5A6]">Sys</strong>
+      </div>
+    </aside>
+
+  </main>
+
+  <script type="module">
+    import { db } from './js/firebase-config.js';
+    import { doc, getDoc, collection, query, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    let audioLiberado = false;
+    let ultimaChaveChamada = null;
+    let primeiraCarga = true;
+
+    // Relógio ao vivo
+    function atualizarRelogio() {
+      const agora = new Date();
+      document.getElementById('tvRelogio').textContent = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      document.getElementById('tvData').textContent = agora.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+    }
+    atualizarRelogio();
+    setInterval(atualizarRelogio, 1000);
+
+    // Campainha sonora (Ding-Dong) usando Web Audio API nativa
+    function tocarCampainha() {
+      if (!audioLiberado) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+
+        const tocarNota = (freq, inicio, duracao) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + inicio);
+          gain.gain.setValueAtTime(0.001, ctx.currentTime + inicio);
+          gain.gain.exponentialRampToValueAtTime(0.35, ctx.currentTime + inicio + 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + inicio + duracao);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + inicio);
+          osc.stop(ctx.currentTime + inicio + duracao);
+        };
+
+        tocarNota(659.25, 0, 0.55);    // Mi
+        tocarNota(523.25, 0.45, 0.85); // Dó
+      } catch (e) {
+        console.warn("Áudio bloqueado pelo navegador:", e);
+      }
+    }
+
+    // Fala o nome do paciente em voz alta
+    function anunciarPorVoz(paciente, sala, medico) {
+      if (!audioLiberado || !('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const destino = sala || medico || "consultório";
+        const fala = new SpeechSynthesisUtterance(`Paciente ${paciente}, favor comparecer ao ${destino}.`);
+        fala.lang = 'pt-BR';
+        fala.rate = 0.95;
+        setTimeout(() => window.speechSynthesis.speak(fala), 950);
+      } catch (e) {
+        console.warn("Voz indisponível:", e);
+      }
+    }
+
+    document.getElementById('btnAtivarAudio').addEventListener('click', () => {
+      audioLiberado = !audioLiberado;
+      const btn = document.getElementById('btnAtivarAudio');
+      const icone = document.getElementById('iconeAudio');
+      const texto = document.getElementById('textoAudio');
+
+      if (audioLiberado) {
+        icone.textContent = "🔊";
+        texto.textContent = "Som & Voz Ativos";
+        btn.classList.remove('bg-[#1EB5A6]', 'text-[#071D34]');
+        btn.classList.add('bg-emerald-500', 'text-white');
+        tocarCampainha();
+      } else {
+        icone.textContent = "🔇";
+        texto.textContent = "Ativar Som & Voz";
+        btn.classList.remove('bg-emerald-500', 'text-white');
+        btn.classList.add('bg-[#1EB5A6]', 'text-[#071D34]');
+      }
+    });
+
+    function obterTimestampChamada(item) {
+      if (item.chamadoEm && typeof item.chamadoEm.toMillis === 'function') {
+        return item.chamadoEm.toMillis();
+      }
+      return 0;
+    }
+
+    async function inicializarTV() {
+      const params = new URLSearchParams(window.location.search);
+      let clinicaId = params.get('clinica') || sessionStorage.getItem('vitaesys_clinica_id');
+      const codigo = params.get('codigo');
+
+      if (!clinicaId && codigo) {
+        const qCod = query(collection(db, "clinicas"), where("codigoAcesso", "==", codigo.toUpperCase()));
+        const snapCod = await getDocs(qCod);
+        if (!snapCod.empty) {
+          clinicaId = snapCod.docs[0].id;
+        }
+      }
+
+      if (!clinicaId) {
+        document.getElementById('tvNomeClinica').textContent = "Clínica não identificada";
+        document.getElementById('tvPacienteAtual').textContent = "Abra este painel pelo menu do Gestor";
+        return;
+      }
+
+      // Carrega nome e logotipo da clínica
+      const cSnap = await getDoc(doc(db, "clinicas", clinicaId));
+      if (cSnap.exists()) {
+        const cData = cSnap.data();
+        document.getElementById('tvNomeClinica').textContent = cData.nomeFantasia || "Painel de Atendimento";
+        if (cData.logoBase64) {
+          const logoEl = document.getElementById('tvLogoClinica');
+          logoEl.src = cData.logoBase64;
+          logoEl.classList.remove('hidden');
+        }
+      }
+
+      // Escuta atendimentos da clínica em tempo real
+      const qAtend = query(collection(db, "atendimentos"), where("clinicaId", "==", clinicaId));
+      onSnapshot(qAtend, (snapshot) => {
+        const hojeISO = new Date().toISOString().split('T')[0];
+        const chamados = [];
+
+        snapshot.forEach(docSnap => {
+          const d = docSnap.data();
+          const isHoje = !d.dataAtendimento || d.dataAtendimento === hojeISO;
+          const foiChamado = (d.status === 'em_atendimento' || d.status === 'finalizado') && obterTimestampChamada(d) > 0;
+
+          if (isHoje && foiChamado) {
+            chamados.push({ id: docSnap.id, ...d });
+          }
+        });
+
+        // Ordena do mais recente chamado para o mais antigo
+        chamados.sort((a, b) => obterTimestampChamada(b) - obterTimestampChamada(a));
+
+        if (chamados.length === 0) {
+          document.getElementById('tvPacienteAtual').textContent = "Aguardando Chamada...";
+          document.getElementById('tvSalaAtual').textContent = "Consultório";
+          document.getElementById('tvMedicoAtual').textContent = "---";
+          document.getElementById('tvHoraChamada').textContent = "--:--";
+          primeiraCarga = false;
+          return;
+        }
+
+        const atual = chamados[0];
+        const tsAtual = obterTimestampChamada(atual);
+        const chaveAtual = `${atual.id}_${tsAtual}`;
+
+        document.getElementById('tvPacienteAtual').textContent = atual.pacienteNome || "Paciente";
+        document.getElementById('tvSalaAtual').textContent = atual.consultorioNome || "Consultório";
+        document.getElementById('tvMedicoAtual').textContent = atual.medicoNome || "Médico(a)";
+        document.getElementById('tvHoraChamada').textContent = atual.horaAtendimentoMedico || "--:--";
+
+        // Se houve uma nova chamada (ou o médico clicou em "Chamar Novamente na TV")
+        if (!primeiraCarga && chaveAtual !== ultimaChaveChamada) {
+          const card = document.getElementById('cardChamadaPrincipal');
+          card.classList.remove('animar-chamada');
+          void card.offsetWidth;
+          card.classList.add('animar-chamada');
+
+          tocarCampainha();
+          anunciarPorVoz(atual.pacienteNome, atual.consultorioNome, atual.medicoNome);
+        }
+
+        ultimaChaveChamada = chaveAtual;
+        primeiraCarga = false;
+
+        // Renderiza últimas chamadas (posições 1 a 4)
+        const anteriores = chamados.slice(1, 5);
+        const listaEl = document.getElementById('listaUltimasChamadas');
+
+        if (anteriores.length === 0) {
+          listaEl.innerHTML = `
+            <div class="p-4 rounded-2xl bg-[#071D34]/60 border border-slate-800 text-center text-slate-400 text-sm">
+              Nenhuma chamada anterior hoje.
+            </div>
+          `;
+        } else {
+          listaEl.innerHTML = anteriores.map(item => `
+            <div class="p-4 rounded-2xl bg-[#071D34]/80 border border-slate-700/70 flex justify-between items-center gap-3">
+              <div class="min-w-0">
+                <p class="font-extrabold text-base md:text-lg text-white truncate">${item.pacienteNome || 'Paciente'}</p>
+                <p class="text-xs text-teal-300 font-semibold truncate">${item.consultorioNome || 'Consultório'} • ${item.medicoNome || ''}</p>
+              </div>
+              <span class="text-sm font-bold text-slate-300 bg-slate-800 px-2.5 py-1 rounded-lg shrink-0">
+                ${item.horaAtendimentoMedico || '--:--'}
+              </span>
+            </div>
+          `).join('');
+        }
+      });
+    }
+
+    inicializarTV();
+  </script>
+</body>
+</html>

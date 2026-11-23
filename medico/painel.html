@@ -53,16 +53,17 @@
             <input type="file" id="inputFotoMedico" accept="image/png, image/jpeg, image/webp" class="hidden">
           </div>
 
-          <!-- Título, Nome do Médico, Registro Conselho, Lápis de Edição e Badge -->
+          <!-- Título, Nome do Médico, Registro Conselho, Sala, Lápis de Edição e Badge -->
           <div>
             <div class="flex flex-wrap items-center gap-2">
               <h1 class="text-lg md:text-xl font-extrabold text-slate-900 tracking-tight">
                 Ambiente Exclusivo do Médico <span class="text-slate-300 font-normal mx-0.5">•</span> <span id="tituloNomeMedico" class="text-[#0B2C4D]">Dr(a). ---</span>
               </h1>
               <span id="badgeRegistroConselho" class="hidden px-2.5 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-[#0B2C4D] text-xs font-bold"></span>
+              <span id="badgeConsultorioMedico" class="hidden px-2.5 py-0.5 rounded-md bg-teal-50 border border-teal-200 text-[#0B2C4D] text-xs font-bold"></span>
               
               <!-- Botão Lápis para Editar Cadastro do Médico -->
-              <button type="button" id="btnAbrirEditarMedico" title="Editar informações do cadastro (Nome e Nº Registro Conselho)" class="p-1.5 rounded-lg text-slate-400 hover:text-[#0B2C4D] hover:bg-slate-100 border border-transparent hover:border-slate-200 transition">
+              <button type="button" id="btnAbrirEditarMedico" title="Editar nome, registro do conselho e sala/consultório" class="p-1.5 rounded-lg text-slate-400 hover:text-[#0B2C4D] hover:bg-slate-100 border border-transparent hover:border-slate-200 transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
                 </svg>
@@ -115,7 +116,7 @@
             <div class="w-14 h-14 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center text-2xl">🩺</div>
             <h3 class="text-lg font-bold text-[#0B2C4D]">Nenhum paciente em atendimento</h3>
             <p class="text-sm text-slate-500 max-w-md mx-auto">
-              Selecione um paciente na <strong>Fila de Espera</strong> ao lado e clique em <strong>Atender Paciente</strong> para iniciar a consulta.
+              Selecione um paciente na <strong>Fila de Espera</strong> ao lado e clique em <strong>Atender Paciente</strong> para iniciar a consulta e chamar no painel da TV.
             </p>
           </div>
 
@@ -132,9 +133,17 @@
                   <p id="atendEnderecoConvenio" class="text-xs text-slate-500 mt-0.5"></p>
                 </div>
 
-                <div class="text-left sm:text-right shrink-0">
-                  <span class="text-[11px] text-slate-400 block">Entrada na Recepção</span>
-                  <strong id="atendHoraEntrada" class="text-sm font-bold text-[#0B2C4D]">--:--</strong>
+                <div class="flex flex-col items-start sm:items-end gap-2 shrink-0">
+                  <div class="text-left sm:text-right">
+                    <span class="text-[11px] text-slate-400 block">Entrada na Recepção</span>
+                    <strong id="atendHoraEntrada" class="text-sm font-bold text-[#0B2C4D]">--:--</strong>
+                  </div>
+
+                  <!-- Botão Chamar Novamente na TV -->
+                  <button type="button" id="btnChamarNovamenteTV" class="px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-[#0B2C4D] border border-teal-200 rounded-lg text-xs font-bold transition flex items-center gap-1.5">
+                    <span>📺</span>
+                    <span>Chamar Novamente na TV</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -190,7 +199,7 @@
       <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
         <div>
           <h3 class="text-base font-extrabold text-[#0B2C4D]">Editar Dados do Profissional</h3>
-          <p class="text-xs text-slate-500">Atualize seu nome e registro no conselho de classe</p>
+          <p class="text-xs text-slate-500">Atualize seu nome, conselho e sala de atendimento (TV)</p>
         </div>
         <button type="button" id="btnFecharModalMedico" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -208,7 +217,12 @@
         <div>
           <label class="block text-xs font-bold text-[#0B2C4D] uppercase mb-1">Nº Registro Conselho (Sigla + Nº)</label>
           <input type="text" id="editMedicoConselho" placeholder="Ex: CRM-AM 12345 ou CRO-AM 6789" class="w-full p-2.5 border border-slate-300 rounded-xl text-sm uppercase font-semibold outline-none focus:ring-2 focus:ring-[#1EB5A6]">
-          <p class="text-[11px] text-slate-400 mt-1">Este número sairá automaticamente na assinatura do receituário PDF.</p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-[#0B2C4D] uppercase mb-1">Consultório / Sala (Exibido na TV)</label>
+          <input type="text" id="editMedicoConsultorio" placeholder="Ex: Consultório 01" class="w-full p-2.5 border border-slate-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#1EB5A6]">
+          <p class="text-[11px] text-slate-400 mt-1">Aparece na TV da recepção quando você chamar o paciente.</p>
         </div>
 
         <div class="pt-2 flex justify-end gap-2">
@@ -236,6 +250,7 @@
     let medicoUid = null;
     let medicoNome = "";
     let medicoRegistroConselho = "";
+    let medicoConsultorio = "";
     let medicoFotoBase64 = "";
     let filaAtendimentos = [];
     let atendimentoSelecionado = null;
@@ -322,6 +337,15 @@
         badgeConselho.classList.add('hidden');
       }
 
+      const badgeSala = document.getElementById('badgeConsultorioMedico');
+      if (medicoConsultorio) {
+        badgeSala.textContent = medicoConsultorio;
+        badgeSala.classList.remove('hidden');
+      } else {
+        badgeSala.textContent = "";
+        badgeSala.classList.add('hidden');
+      }
+
       atualizarAvatarMedico(medicoFotoBase64, medicoNome);
     }
 
@@ -331,6 +355,7 @@
     document.getElementById('btnAbrirEditarMedico').addEventListener('click', () => {
       document.getElementById('editMedicoNome').value = medicoNome;
       document.getElementById('editMedicoConselho').value = medicoRegistroConselho;
+      document.getElementById('editMedicoConsultorio').value = medicoConsultorio;
       modalEditarMedico.classList.remove('hidden');
     });
 
@@ -355,15 +380,18 @@
 
       const novoNome = document.getElementById('editMedicoNome').value.trim();
       const novoConselho = document.getElementById('editMedicoConselho').value.trim().toUpperCase();
+      const novoConsultorio = document.getElementById('editMedicoConsultorio').value.trim();
 
       try {
         await updateDoc(doc(db, "usuarios", medicoUid), {
           nome: novoNome,
-          registroConselho: novoConselho
+          registroConselho: novoConselho,
+          consultorioNome: novoConsultorio
         });
 
         medicoNome = novoNome;
         medicoRegistroConselho = novoConselho;
+        medicoConsultorio = novoConsultorio;
 
         sessionStorage.setItem('vitaesys_usuario_nome', medicoNome);
         if (medicoRegistroConselho) {
@@ -448,6 +476,7 @@
         clinicaId = uData.clinicaId || clinicaId;
         medicoNome = uData.nome || medicoNome;
         medicoRegistroConselho = uData.registroConselho || medicoRegistroConselho;
+        medicoConsultorio = uData.consultorioNome || "";
         medicoFotoBase64 = uData.fotoBase64 || "";
         sessionStorage.setItem('vitaesys_clinica_id', clinicaId);
         sessionStorage.setItem('vitaesys_usuario_nome', medicoNome);
@@ -552,7 +581,9 @@
       try {
         await updateDoc(doc(db, "atendimentos", atendimentoId), {
           status: "em_atendimento",
-          horaAtendimentoMedico: horaInicioConsulta
+          horaAtendimentoMedico: horaInicioConsulta,
+          consultorioNome: medicoConsultorio || "Consultório",
+          chamadoEm: serverTimestamp()
         });
       } catch (err) {
         console.error("Erro ao atualizar status:", err);
@@ -576,6 +607,28 @@
 
       renderizarFila();
     };
+
+    // Botão Chamar Novamente na TV
+    document.getElementById('btnChamarNovamenteTV').addEventListener('click', async () => {
+      if (!atendimentoSelecionado) return;
+      const btn = document.getElementById('btnChamarNovamenteTV');
+      btn.disabled = true;
+
+      try {
+        await updateDoc(doc(db, "atendimentos", atendimentoSelecionado.id), {
+          consultorioNome: medicoConsultorio || "Consultório",
+          chamadoEm: serverTimestamp()
+        });
+        btn.innerHTML = `<span>✅</span><span>Chamado na TV!</span>`;
+        setTimeout(() => {
+          btn.innerHTML = `<span>📺</span><span>Chamar Novamente na TV</span>`;
+          btn.disabled = false;
+        }, 2500);
+      } catch (err) {
+        alert("Erro ao chamar na TV: " + err.message);
+        btn.disabled = false;
+      }
+    });
 
     document.getElementById('formAtendimentoMedico').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -658,7 +711,6 @@
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF();
 
-      // Cabeçalho Institucional da Clínica
       pdf.setFillColor(11, 44, 77);
       pdf.rect(0, 0, 210, 34, 'F');
 
@@ -684,7 +736,6 @@
       pdf.text(`CNPJ: ${clinicaAtual?.cnpj || ''}  |  Tel: ${clinicaAtual?.telefone || ''}`, xTexto, 21);
       pdf.text(`${clinicaAtual?.endereco || ''}`, xTexto, 27);
 
-      // Título Principal do Documento
       pdf.setTextColor(11, 44, 77);
       pdf.setFontSize(13);
       pdf.setFont("helvetica", "bold");
@@ -692,7 +743,6 @@
       pdf.setDrawColor(30, 181, 166);
       pdf.line(14, 48.5, 196, 48.5);
 
-      // --- QUADRO 1: DADOS DO PACIENTE ---
       const nomePac = atendimentoSelecionado.pacienteNome || "Não informado";
       const cpfPac = atendimentoSelecionado.pacienteCpf || "Não informado";
       const nascPac = formatarDataBR(atendimentoSelecionado.pacienteNascimento || atendimentoSelecionado.dataNascimento);
@@ -746,17 +796,14 @@
 
       let cursorY = 52 + alturaBoxPaciente + 6;
 
-      // --- QUADRO 2: PRESCRIÇÃO MÉDICA ---
       const textoPrescricaoFinal = prescricao || "Nenhuma medicação prescrita nesta consulta.";
       const linhasPrescricao = pdf.splitTextToSize(textoPrescricaoFinal, 174);
       cursorY = desenharQuadroSecaoPDF(pdf, "Prescrição Médica", linhasPrescricao, cursorY, 48) + 6;
 
-      // --- QUADRO 3: RECOMENDAÇÕES ---
       const textoRecomendacoesFinal = recomendacoes || "Seguir orientações médicas e retornar em caso de persistência dos sintomas.";
       const linhasRecomendacoes = pdf.splitTextToSize(textoRecomendacoesFinal, 174);
       cursorY = desenharQuadroSecaoPDF(pdf, "Recomendações & Orientações", linhasRecomendacoes, cursorY, 34) + 6;
 
-      // Data de emissão e assinatura do médico com Registro do Conselho
       const dataHojeBR = new Date().toLocaleDateString('pt-BR');
       pdf.setFontSize(9);
       pdf.setFont("helvetica", "normal");
